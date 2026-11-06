@@ -1,0 +1,1497 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Control de Avance de Obra — Pavimento Rígido v1.4</title>
+<style>
+:root{
+  --azul:#004B87;--azul2:#0068c9;--verde:#087f5b;--verde2:#0ca678;
+  --rojo:#c62828;--naranja:#c05621;--violeta:#6a1b9a;--gris:#546e7a;
+  --texto:#263238;--muted:#607d8b;--borde:#dce4e8;--bg:#eef2f7;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:linear-gradient(135deg,#eef2f7 0%,#dfe8f0 100%);min-height:100vh;color:var(--texto);padding:20px 12px}
+.contenedor{max-width:1500px;margin:0 auto}
+
+/* CABECERA */
+.cabecera{background:linear-gradient(135deg,#004B87,#0068c9);color:#fff;border-radius:14px;padding:24px;text-align:center;box-shadow:0 8px 22px rgba(0,75,135,.25);margin-bottom:18px}
+.cabecera h1{font-size:22px;margin-bottom:6px}
+.cabecera p{font-size:12.5px;opacity:.9}
+.cabecera .autor{margin-top:10px;font-size:11.5px;font-weight:bold;opacity:.85;line-height:1.6}
+.cabecera .autor span{display:block}
+
+/* SECCIONES */
+.seccion{background:#fff;border-radius:12px;box-shadow:0 4px 14px rgba(0,0,0,.08);padding:20px;margin-bottom:16px}
+.seccion h2{color:var(--azul);font-size:16px;margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid #e0e8f0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.seccion h2 .badge{font-size:11px;font-weight:normal;color:var(--muted);background:#f0f4f8;padding:4px 12px;border-radius:20px}
+
+/* GRID */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.campo label{display:block;font-size:12.5px;font-weight:bold;color:#37474f;margin-bottom:5px}
+.campo input,.campo select,.campo textarea{width:100%;padding:9px 11px;border:1px solid #cfd8dc;border-radius:8px;font-size:13.5px;background:#fafcfc;font-family:inherit}
+.campo textarea{resize:vertical;min-height:60px}
+.campo input:focus,.campo select:focus,.campo textarea:focus{outline:none;border-color:var(--azul);box-shadow:0 0 0 3px rgba(0,75,135,.1);background:#fff}
+.campo input[readonly]{background:#eef2f7;font-weight:bold;color:var(--azul)}
+.campo .ayuda{font-size:10.5px;color:var(--muted);margin-top:3px;font-style:italic}
+
+/* BOTONES */
+.btn-grande{display:block;width:100%;padding:14px;background:linear-gradient(135deg,#004B87,#0068c9);color:#fff;border:none;border-radius:9px;font-size:15px;font-weight:bold;cursor:pointer;transition:.2s;font-family:inherit;letter-spacing:.5px;margin-top:16px}
+.btn-grande:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,75,135,.3)}
+.btn-mediano{padding:10px 20px;background:var(--verde);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:bold;cursor:pointer;font-family:inherit;transition:.2s}
+.btn-mediano:hover{background:#05664a}
+.btn-outline{padding:9px 16px;background:#fff;color:var(--azul);border:2px solid var(--azul);border-radius:8px;font-size:13px;font-weight:bold;cursor:pointer;font-family:inherit;transition:.2s}
+.btn-outline:hover{background:var(--azul);color:#fff}
+.btn-peligro{background:#fff;color:var(--rojo);border-color:var(--rojo)}
+.btn-peligro:hover{background:var(--rojo);color:#fff}
+
+/* BARRA DE ARCHIVO */
+.barra-archivo{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;background:#fff;border-radius:12px;padding:14px 18px;box-shadow:0 4px 14px rgba(0,0,0,.08);align-items:center;justify-content:space-between}
+.barra-archivo .grupo-btn{display:flex;gap:8px;flex-wrap:wrap}
+.btn-arch{padding:9px 16px;border-radius:8px;font-size:12.5px;font-weight:bold;cursor:pointer;font-family:inherit;transition:.2s;border:2px solid transparent;display:inline-flex;align-items:center;gap:6px}
+.btn-arch.guardar{background:var(--verde);color:#fff}
+.btn-arch.guardar:hover{background:#05664a;transform:translateY(-1px)}
+.btn-arch.abrir{background:var(--azul);color:#fff}
+.btn-arch.abrir:hover{background:#003a6b;transform:translateY(-1px)}
+.btn-arch.csv{background:var(--naranja);color:#fff}
+.btn-arch.csv:hover{background:#c47f1f;transform:translateY(-1px)}
+.btn-arch.actualizar{background:#8e24aa;color:#fff}
+.btn-arch.actualizar:hover{background:#6a1b9a;transform:translateY(-1px)}
+.btn-arch.limpiar{background:#fff;color:var(--rojo);border-color:var(--rojo)}
+.btn-arch.limpiar:hover{background:var(--rojo);color:#fff}
+
+/* ERROR */
+.aviso{background:#fff8e1;border-left:4px solid #e9a23b;padding:11px 14px;border-radius:6px;font-size:12px;color:#76551c;line-height:1.5;margin-bottom:14px}
+.aviso b{color:#c05621}
+.aviso.info{background:#e3f2fd;border-color:#1976d2;color:#0d47a1}
+.aviso.info b{color:#1565c0}
+.aviso.error{background:#ffebee;border-color:var(--rojo);color:#b71c1c;display:none;margin-bottom:14px}
+.aviso.error.visible{display:block}
+.aviso.ok{background:#e8f5e9;border-color:var(--verde);color:#1b5e20}
+
+/* TABLA */
+.tabla-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:10px}
+.tabla-toolbar .info-edicion{font-size:11.5px;color:var(--muted);font-style:italic}
+.tabla-toolbar .info-edicion b{color:var(--azul)}
+.tabla-toolbar .filtros{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:#f5f9fc;padding:6px 12px;border-radius:8px;border:1px solid #d5e0ea}
+.tabla-toolbar .filtros select{padding:6px 10px;border:1px solid #cfd8dc;border-radius:6px;font-size:12px;background:#fff;font-family:inherit}
+.tabla-toolbar .filtros label{font-size:11.5px;font-weight:bold;color:var(--muted)}
+
+.tabla-viajes{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06);font-size:12px}
+.tabla-viajes th{background:var(--azul);color:#fff;padding:8px 6px;text-align:center;font-size:10.5px;font-weight:bold;text-transform:uppercase;letter-spacing:.2px;position:sticky;top:0;z-index:5;cursor:pointer;user-select:none}
+.tabla-viajes th:hover{background:#003a6b}
+.tabla-viajes td{padding:4px 3px;border-bottom:1px solid #e8edf2;text-align:center;font-family:'Courier New',monospace;font-size:12px;background:#fff}
+.tabla-viajes tr:last-child td{border-bottom:none}
+.tabla-viajes tr:nth-child(even) td{background:#fafcfd}
+.tabla-viajes tr.alerta td{background:#fff3cd !important;color:#7a5c00}
+.tabla-viajes tr.alerta-critico td{background:#ffebee !important;color:#b71c1c}
+.tabla-viajes td.num{color:var(--azul);font-weight:bold}
+.tabla-viajes td input.celda-edit, .tabla-viajes td select.celda-edit{width:100%;padding:6px 4px;border:1px solid transparent;border-radius:5px;font-family:'Courier New',monospace;font-size:12px;text-align:center;background:transparent;color:inherit;font-weight:inherit;transition:all .15s}
+.tabla-viajes td select.celda-edit{cursor:pointer}
+.tabla-viajes td input.celda-edit:hover, .tabla-viajes td select.celda-edit:hover{border-color:#b0bec5;background:#fff}
+.tabla-viajes td input.celda-edit:focus, .tabla-viajes td select.celda-edit:focus{outline:none;border-color:var(--azul);background:#fff;box-shadow:0 0 0 2px rgba(0,75,135,.15)}
+.tabla-viajes td input.celda-edit.modificado{background:#fffde7;border-color:var(--naranja)}
+.tabla-viajes td input.celda-edit.invalido{background:#ffebee;border-color:var(--rojo)}
+.tabla-viajes td.celda-editable{position:relative}
+.tabla-viajes .btn-x{background:#ffebee;color:var(--rojo);border:none;border-radius:4px;width:22px;height:22px;cursor:pointer;font-size:12px;font-weight:bold;transition:.15s}
+.tabla-viajes .btn-x:hover{background:#ffcdd2;transform:scale(1.1)}
+.scroll-tabla{max-height:480px;overflow-y:auto;border-radius:10px;border:1px solid #e0e8f0}
+
+/* FORMULARIO VIAJE */
+.form-viaje{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;align-items:end;background:#f5f9fc;border:1px solid #d5e0ea;border-radius:10px;padding:14px;margin-bottom:14px}
+.form-viaje .campo label{font-size:11px}
+.form-viaje .campo input, .form-viaje .campo select{padding:7px 9px;font-size:13px}
+.form-viaje .btn-group{grid-column:span 2;display:flex;gap:6px}
+.form-viaje .btn-group button{flex:1;padding:8px 6px;font-size:12px}
+
+/* TARJETAS RESUMEN */
+.tarjetas-resumen{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:18px}
+.tarjeta-res{background:#fff;border-radius:10px;padding:14px;border-left:5px solid var(--azul);box-shadow:0 3px 10px rgba(0,0,0,.06)}
+.tarjeta-res .titulo{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;font-weight:bold;margin-bottom:6px;line-height:1.3}
+.tarjeta-res .valor{font-size:20px;font-weight:bold;color:var(--azul);line-height:1.1}
+.tarjeta-res .unidad{font-size:11px;color:var(--muted);font-weight:normal;margin-left:3px}
+.tarjeta-res.viajes{border-left-color:#1976d2;background:linear-gradient(135deg,#e3f2fd,#f5f9fc)}
+.tarjeta-res.viajes .valor{color:#0d47a1}
+.tarjeta-res.acum{border-left-color:var(--verde);background:linear-gradient(135deg,#e8f5e9,#f5faf5)}
+.tarjeta-res.acum .valor{color:var(--verde)}
+.tarjeta-res.cierre{border-left-color:var(--naranja);background:linear-gradient(135deg,#fff8e1,#fdf9f1)}
+.tarjeta-res.cierre .valor{color:#c05621}
+.tarjeta-res.cierre.negativo{border-left-color:var(--rojo);background:linear-gradient(135deg,#ffebee,#fdf2f2)}
+.tarjeta-res.cierre.negativo .valor{color:var(--rojo)}
+.tarjeta-res.obra{border-left-color:var(--violeta);background:linear-gradient(135deg,#f3e5f5,#f9f5fb)}
+.tarjeta-res.obra .valor{color:var(--violeta)}
+.tarjeta-res.ok{border-left-color:var(--verde);background:linear-gradient(135deg,#e8f5e9,#f5faf5)}
+.tarjeta-res.ok .valor{color:var(--verde)}
+
+/* PAPIRO SVG */
+.papiro-container{background:#fff;border-radius:12px;padding:16px;border:1px solid var(--borde);margin-bottom:16px;overflow-x:auto}
+.papiro-svg{display:block;min-height:300px}
+.papiro-leyenda{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;margin-top:14px;font-size:11.5px}
+.papiro-leyenda .item{display:flex;align-items:center;gap:6px}
+.papiro-leyenda .swatch{width:22px;height:12px;border-radius:2px;border:1px solid rgba(0,0,0,.15)}
+
+/* GRÁFICOS */
+.grafico{background:#fff;border-radius:12px;padding:16px;border:1px solid var(--borde);margin-bottom:16px}
+.grafico h3{color:var(--azul);font-size:14px;margin-bottom:6px;text-align:center}
+.grafico .subtitulo{text-align:center;font-size:11px;color:var(--muted);margin-bottom:10px}
+.grafico svg{display:block;width:100%;height:auto;max-height:340px;margin:0 auto}
+
+/* BOTONES INFERIORES */
+.botones-inferiores{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+.botones-inferiores button{flex:1;min-width:140px;padding:12px;border:none;border-radius:8px;font-size:13.5px;font-weight:bold;cursor:pointer;font-family:inherit;transition:.2s}
+.btn-imprimir{background:var(--verde);color:#fff}
+.btn-imprimir:hover{background:#05664a}
+.btn-nuevo{background:#e0e8f0;color:var(--azul)}
+.btn-nuevo:hover{background:#cfd8dc}
+.btn-resumen{background:var(--azul);color:#fff}
+.btn-resumen:hover{background:#003a6b}
+
+/* FIRMA IMPRESIÓN */
+.firma-impresion{display:none;margin-top:50px;text-align:center;font-size:12px}
+.firma-impresion .linea{width:280px;border-top:1px solid #333;margin:0 auto 6px}
+.firma-impresion .fila{display:flex;justify-content:space-around;gap:40px;flex-wrap:wrap}
+.firma-impresion .bloque{flex:1;min-width:240px}
+
+/* INDICADOR */
+.indicador-guardado{font-size:11px;color:var(--verde);font-weight:bold;display:none;align-items:center;gap:4px}
+.indicador-guardado.visible{display:inline-flex;animation:fadeIn .3s}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* RESPONSIVE */
+@media(max-width:700px){
+  .form-viaje{grid-template-columns:repeat(2,1fr)}
+  .form-viaje .btn-group{grid-column:span 2}
+  .tabla-viajes{font-size:10.5px}
+  .tabla-viajes th,.tabla-viajes td{padding:4px 2px}
+  .tabla-viajes td input.celda-edit, .tabla-viajes td select.celda-edit{font-size:10.5px;padding:4px 2px}
+  .barra-archivo{flex-direction:column;align-items:stretch}
+  .barra-archivo .grupo-btn{justify-content:center}
+}
+@media print{
+  body{background:#fff;padding:0}
+  .btn-grande,.botones-inferiores,.aviso.error,.btn-mediano,.btn-outline,.form-viaje,.no-print,.btn-x,.tabla-toolbar,.barra-archivo{display:none !important}
+  .cabecera{background:#fff !important;color:var(--texto) !important;border:2px solid var(--azul)}
+  .cabecera *{color:var(--texto) !important}
+  .seccion{box-shadow:none;border:1px solid #ccc;page-break-inside:avoid}
+  .grafico{page-break-inside:avoid}
+  .scroll-tabla{max-height:none;overflow:visible}
+  .tabla-viajes td input.celda-edit, .tabla-viajes td select.celda-edit{border:none;background:transparent}
+  .firma-impresion{display:block !important}
+}
+</style>
+</head>
+<body>
+
+<div class="contenedor">
+
+  <!-- BARRA DE ARCHIVO -->
+  <div class="barra-archivo no-print">
+    <div class="titulo-archivo" style="font-size:12.5px;color:var(--muted);font-weight:bold;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+      📁 Proyecto:
+      <span class="indicador-guardado" id="indicadorGuardado">✓ <span id="textoGuardado">Guardado</span></span>
+    </div>
+    <div class="grupo-btn">
+      <button class="btn-arch actualizar" onclick="actualizarDesdeServidor()" title="Buscar actualizaciones en GitHub">🔄 Actualizar Datos</button>
+      <button class="btn-arch guardar" onclick="guardarProyecto()" title="Descargar archivo .json">💾 Guardar</button>
+      <button class="btn-arch abrir" onclick="abrirProyecto()" title="Cargar archivo .json local">📂 Abrir</button>
+      <button class="btn-arch csv" onclick="exportarCSV()" title="Exportar a CSV (Excel)">📊 CSV</button>
+      <button class="btn-arch limpiar" onclick="limpiarTodo()" title="Borrar todos los datos">🗑 Limpiar</button>
+    </div>
+  </div>
+  <input type="file" id="inputArchivo" accept=".json,application/json" style="display:none">
+
+  <!-- CABECERA -->
+  <div class="cabecera">
+    <h1>🏗️ Control de Avance de Obra — Pavimento Rígido v1.4</h1>
+    <p>Registro de tramos · Papiro de obra · Avance físico y financiero en tiempo real</p>
+    <div class="autor">
+      <span>ING. JOSÉ EDGAR CAMPOS CESPEDES · RNI: 30-222 · TEL: +591 73433166</span>
+      <span>ING. HECTOR ERNESTO GALVEZ RIBERIN · RNI: 17-819 · TEL: +591 76925947</span>
+      <span>Versión 1.4 - 2026</span>
+    </div>
+  </div>
+
+  <div class="aviso error" id="alertaError">
+    <b>❌ Error:</b> <span id="textoError"></span>
+  </div>
+
+  <!-- SECCIÓN 1: CONFIGURACIÓN DE LA OBRA -->
+  <div class="seccion">
+    <h2>⚙️ 1. Configuración de la obra</h2>
+    <div class="grid">
+      <div class="campo">
+        <label>Nombre de la obra</label>
+        <input id="nombreObra" type="text" placeholder="Ej: Doble Vía Sucre-Yamparáez" oninput="sincronizarYRenderizar()">
+      </div>
+      <div class="campo">
+        <label>Progresiva inicial global</label>
+        <input id="progIniGlobal" type="text" placeholder="Ej: 243+000" oninput="sincronizarYRenderizar()">
+      </div>
+      <div class="campo">
+        <label>Progresiva final global</label>
+        <input id="progFinGlobal" type="text" placeholder="Ej: 260+000" oninput="sincronizarYRenderizar()">
+      </div>
+      <div class="campo">
+        <label>Espesor de losa (m)</label>
+        <input id="espesor" type="number" step="0.01" value="0.24" oninput="sincronizarYRenderizar()">
+      </div>
+      <div class="campo">
+        <label>Precio unitario (Bs/m³)</label>
+        <input id="precioUnit" type="number" step="0.01" value="1237.77" oninput="sincronizarYRenderizar()">
+      </div>
+      <div class="campo">
+        <label>Volumen total del ítem (m³)</label>
+        <input id="volTotalItem" type="number" step="0.01" placeholder="Del contrato. Si se deja vacío, se calcula del rango global" oninput="sincronizarYRenderizar()">
+        <div class="ayuda" id="ayudaVolTotal"></div>
+      </div>
+      <div class="campo">
+        <label>Fecha de inicio de obra</label>
+        <input id="fechaInicioObra" type="date" oninput="sincronizarYRenderizar()">
+      </div>
+      <div class="campo">
+        <label>Fecha de fin prevista</label>
+        <input id="fechaFinObra" type="date" oninput="sincronizarYRenderizar()">
+      </div>
+    </div>
+  </div>
+
+  <!-- SECCIÓN 2: MÁQUINAS / TERMINADORAS -->
+  <div class="seccion">
+    <h2>🚜 2. Terminadoras registradas <span class="badge" id="badgeMaquinas">0 máquinas</span></h2>
+    <div class="aviso info">
+      <b>ℹ️ Nota:</b> Registra cada terminadora con su ancho de trabajo típico. Al agregar un tramo podrás elegir la máquina y el ancho se autocompletará.
+    </div>
+    <div class="form-viaje no-print" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">
+      <div class="campo"><label>Código / Nombre</label><input id="mCodigo" type="text" placeholder="Ej: SP-500"></div>
+      <div class="campo"><label>Ancho típico (m)</label><input id="mAncho" type="number" step="0.01" placeholder="Ej: 4.5"></div>
+      <div class="campo"><label>Color</label><input id="mColor" type="color" value="#004B87" style="height:38px;padding:4px"></div>
+      <div class="campo" style="grid-column:span 1"><label>&nbsp;</label><button class="btn-mediano" style="width:100%" onclick="agregarMaquina()">➕ Agregar</button></div>
+    </div>
+    <div id="listaMaquinas" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"></div>
+  </div>
+
+  <!-- SECCIÓN 3: REGISTRO DE AVANCE -->
+  <div class="seccion">
+    <h2>📋 3. Registro de avance <span class="badge" id="badgeTramos">0 tramos registrados</span></h2>
+    
+    <div class="form-viaje no-print">
+      <div class="campo">
+        <label>Prog. inicio</label>
+        <input id="fIni" type="text" placeholder="243+633" oninput="actualizarLongitudViva()">
+      </div>
+      <div class="campo">
+        <label>Prog. final</label>
+        <input id="fFin" type="text" placeholder="243+654" oninput="actualizarLongitudViva()">
+      </div>
+      <div class="campo" style="background:#eef2f7;border-radius:8px;padding:0 8px;">
+        <label style="color:var(--azul)">Distancia</label>
+        <input id="fDistViva" type="text" readonly value="0.00 m" style="border:none;background:transparent;font-weight:bold;color:var(--azul);padding-left:0">
+      </div>
+      <div class="campo"><label>Máquina</label><select id="fMaquina" onchange="autocompletarAncho()"></select></div>
+      <div class="campo"><label>Ancho real (m)</label><input id="fAncho" type="number" step="0.01" placeholder="4.5"></div>
+      <div class="campo"><label>Vía</label><select id="fVia"><option value="IZQUIERDA">IZQUIERDA</option><option value="DERECHA">DERECHA</option><option value="COMPLETA">COMPLETA</option></select></div>
+      <div class="campo">
+        <label>Ubicación</label>
+        <select id="fObs">
+          <option value="INTERNA">INTERNA</option>
+          <option value="EXTERNA">EXTERNA</option>
+          <option value="PC">PC (Completa)</option>
+        </select>
+      </div>
+      <div class="campo"><label>Fecha</label><input id="fFecha" type="date"></div>
+      <div class="btn-group">
+        <button class="btn-mediano" onclick="agregarTramo()">➕ Agregar tramo</button>
+        <button class="btn-outline" onclick="duplicarUltimo()" title="Duplicar último">⧉ Duplicar</button>
+      </div>
+    </div>
+
+    <div class="tabla-toolbar no-print">
+      <div class="info-edicion">ℹ️ <b>Tip:</b> Clic en celda para editar. Enter pasa a la siguiente. Totales se recalculan solos.</div>
+      <div class="filtros">
+        <label for="filtroMaquina">Máquina:</label>
+        <select id="filtroMaquina" onchange="renderTabla()"><option value="todas">Todas</option></select>
+        
+        <label for="filtroVia">Vía:</label>
+        <select id="filtroVia" onchange="renderTabla()"><option value="todas">Todas</option><option value="IZQUIERDA">Izquierda</option><option value="DERECHA">Derecha</option><option value="COMPLETA">Completa</option></select>
+        
+        <label for="filtroMes">Mes:</label>
+        <select id="filtroMes" onchange="renderTabla()">
+          <option value="todos">Todos</option>
+          <option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option>
+          <option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option>
+          <option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option>
+          <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+        </select>
+        
+        <label for="filtroAnio">Año:</label>
+        <select id="filtroAnio" onchange="renderTabla()"><option value="todos">Todos</option></select>
+      </div>
+    </div>
+
+    <div class="scroll-tabla">
+      <table class="tabla-viajes">
+        <thead>
+          <tr>
+            <th onclick="ordenarPor('num')">N°</th>
+            <th onclick="ordenarPor('progIni')">Prog. Ini</th>
+            <th onclick="ordenarPor('progFin')">Prog. Fin</th>
+            <th onclick="ordenarPor('dist')">Dist.</th>
+            <th onclick="ordenarPor('maquina')">Máquina</th>
+            <th onclick="ordenarPor('ancho')">Ancho</th>
+            <th onclick="ordenarPor('via')">Vía</th>
+            <th onclick="ordenarPor('obs')">Ubicación</th>
+            <th onclick="ordenarPor('fecha')">Fecha</th>
+            <th onclick="ordenarPor('vol')">Volumen</th>
+            <th onclick="ordenarPor('monto')">Monto</th>
+            <th onclick="ordenarPor('volAcum')">Vol. Acum</th>
+            <th onclick="ordenarPor('montoAcum')">Monto Acum</th>
+            <th class="no-print"></th>
+          </tr>
+        </thead>
+        <tbody id="cuerpoTramos"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SECCIÓN 4: RESUMEN -->
+  <div class="seccion">
+    <h2>📊 4. Resumen de avance</h2>
+    <div class="tarjetas-resumen" id="tarjetasResumen"></div>
+    <div id="zonaVeredicto"></div>
+  </div>
+
+  <!-- SECCIÓN 5: PAPIRO -->
+  <div class="seccion">
+    <h2>🗺️ 5. Papiro de obra <span class="badge">Pavimento rígido</span></h2>
+    <div class="aviso info no-print">
+      <b>ℹ️ Cómo leerlo:</b> Eje horizontal = progresiva. Eje vertical = vía. Las barras se pegan al eje si son <b>internas</b> o al borde si son <b>externas</b>. El grosor refleja el ancho real y los colores son los de cada máquina.
+    </div>
+    <div class="papiro-container">
+      <svg id="papiroSvg" class="papiro-svg" viewBox="0 0 1200 300" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Papiro de obra pavimento rígido"></svg>
+    </div>
+    <div class="papiro-leyenda" id="papiroLeyenda"></div>
+    <div class="botones-inferiores no-print" style="margin-top:14px">
+      <button class="btn-outline" onclick="exportarPapiroPNG()">📷 Exportar Papiro a PNG</button>
+      <button class="btn-outline" onclick="ajustarZoomPapiro(0.8)">➖ Zoom Out</button>
+      <span style="display:flex;align-items:center;font-size:12px;font-weight:bold;color:var(--muted)" id="zoomLabel">100%</span>
+      <button class="btn-outline" onclick="ajustarZoomPapiro(1.25)">➕ Zoom In</button>
+    </div>
+  </div>
+
+  <!-- SECCIÓN 6: GRÁFICOS DE AVANCE -->
+  <div class="seccion">
+    <h2>📈 6. Gráficos de avance</h2>
+    <div class="grafico">
+      <h3>Volumen acumulado por fecha</h3>
+      <div class="subtitulo">Curva S de avance físico</div>
+      <svg id="graficoCurvaS" viewBox="0 0 900 300" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+    <div class="grafico">
+      <h3>Avance por máquina</h3>
+      <div class="subtitulo">Volumen ejecutado (m³)</div>
+      <svg id="graficoMaquinas" viewBox="0 0 900 300" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+    <div class="grafico">
+      <h3>Avance por vía</h3>
+      <div class="subtitulo">Volumen ejecutado (m³)</div>
+      <svg id="graficoVia" viewBox="0 0 900 300" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+  </div>
+
+  <!-- BOTONES INFERIORES -->
+  <div class="botones-inferiores no-print">
+    <button class="btn-imprimir" onclick="window.print()">🖨️ Imprimir todo</button>
+    <button class="btn-resumen" onclick="imprimirResumen()">📄 Imprimir solo resumen</button>
+    <button class="btn-nuevo" onclick="nuevoProyecto()">➕ Nuevo proyecto</button>
+  </div>
+
+  <!-- FIRMA IMPRESIÓN -->
+  <div class="firma-impresion">
+    <div class="fila">
+      <div class="bloque">
+        <div class="linea"></div>
+        <b>Residente de Obra</b><br>
+        <span id="firmaResidente"></span>
+      </div>
+      <div class="bloque">
+        <div class="linea"></div>
+        <b>Fiscal de Obra</b><br>
+        <span id="firmaFiscal"></span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+"use strict";
+
+/* =========================================================
+   CONFIGURACIÓN DE GITHUB
+   Ruta donde estará tu archivo JSON en el repositorio.
+   ========================================================= */
+const URL_DATOS_GITHUB = 'data/proyecto.json';
+
+/* =========================================================
+   UTILIDADES
+   ========================================================= */
+function $(id){ return document.getElementById(id); }
+function fmt(v,d){ if(d===undefined)d=2; return Number(v).toLocaleString('es-BO',{minimumFractionDigits:d,maximumFractionDigits:d}); }
+function fmt0(v){ return Number(v).toLocaleString('es-BO',{maximumFractionDigits:0}); }
+function num(id){ var v=parseFloat($(id).value); return Number.isFinite(v)?v:NaN; }
+function txt(id){ var el=$(id); return el?el.value:""; }
+function fechaISOaLocal(iso){ if(!iso)return ""; var p=iso.split("T")[0].split("-"); return p[2]+"/"+p[1]+"/"+p[0]; }
+function hoyISO(){ var h=new Date(); return h.getFullYear()+"-"+String(h.getMonth()+1).padStart(2,"0")+"-"+String(h.getDate()).padStart(2,"0"); }
+
+function parseProg(str){
+  if(!str)return NaN;
+  str=String(str).trim();
+  if(str.indexOf("+")>=0){
+    var p=str.split("+");
+    var km=parseFloat(p[0])||0;
+    var m=parseFloat(p[1])||0;
+    return km*1000+m;
+  }
+  return parseFloat(str);
+}
+
+function formatearInputProg(input){
+  var val=parseProg(input.value);
+  if(Number.isFinite(val)){
+    input.value=fmtProg(val);
+  }
+}
+
+function fmtProg(m){
+  if(!Number.isFinite(m))return "-";
+  var km=Math.floor(m/1000), mm=Math.round(m-km*1000);
+  if(mm>=1000){km++;mm-=1000;}
+  return km+"+"+String(mm).padStart(3,"0");
+}
+
+function mostrarError(msg){
+  $("textoError").textContent=msg;
+  $("alertaError").classList.add("visible");
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function ocultarError(){ $("alertaError").classList.remove("visible"); }
+
+function debounce(fn,ms){ var t; return function(){ var a=arguments,c=this; clearTimeout(t); t=setTimeout(function(){fn.apply(c,a);},ms); }; }
+
+/* =========================================================
+   CARGA AUTOMÁTICA DESDE GITHUB
+   ========================================================= */
+async function actualizarDesdeServidor(silencioso){
+  try {
+    if(!silencioso) {
+      var btn = document.querySelector('.btn-arch.actualizar');
+      btn.innerHTML = '⏳ Cargando...';
+      btn.disabled = true;
+    }
+    
+    // Agregamos un timestamp para evitar el caché del navegador
+    var response = await fetch(URL_DATOS_GITHUB + '?t=' + new Date().getTime());
+    
+    if (!response.ok) {
+      throw new Error("No se encontró el archivo de datos en el servidor.");
+    }
+    
+    var data = await response.json();
+    cargarEstado(data, true); // true = silencioso (sin alertas)
+    
+    if(!silencioso) {
+      var ind=$("indicadorGuardado");
+      $("textoGuardado").textContent="Actualizado desde GitHub: " + new Date().toLocaleTimeString();
+      ind.classList.add("visible");
+      setTimeout(function(){ind.classList.remove("visible");},4000);
+    }
+    
+  } catch (error) {
+    if(!silencioso) {
+      mostrarError("Error al cargar los datos automáticos. Asegúrate de haber subido 'data/proyecto.json' a tu repositorio de GitHub. Detalle: " + error.message);
+    } else {
+      console.log("No se pudieron cargar los datos automáticos (modo silencioso).");
+    }
+  } finally {
+    if(!silencioso) {
+      var btn = document.querySelector('.btn-arch.actualizar');
+      btn.innerHTML = '🔄 Actualizar Datos';
+      btn.disabled = false;
+    }
+  }
+}
+
+/* =========================================================
+   ESTADO GLOBAL
+   ========================================================= */
+var tramos = [];
+var maquinas = [];
+var geometria = { progIni:0, progFin:0, espesor:0.24, precio:1237.77, volTotal:0 };
+var ordenActual = { campo:"num", asc:true };
+var zoomPapiro = 1;
+
+function actualizarLongitudViva(){
+  var pi = parseProg(txt("fIni"));
+  var pf = parseProg(txt("fFin"));
+  if(Number.isFinite(pi) && Number.isFinite(pf) && pf > pi){
+    $("fDistViva").value = fmt(pf - pi, 2) + " m";
+    $("fDistViva").style.color = "var(--verde)";
+  } else {
+    $("fDistViva").value = "0.00 m";
+    $("fDistViva").style.color = "var(--muted)";
+  }
+}
+
+function leerEstado(){
+  geometria.progIni = parseProg(txt("progIniGlobal")) || 0;
+  geometria.progFin = parseProg(txt("progFinGlobal")) || 0;
+  geometria.espesor = Number.isFinite(num("espesor"))?num("espesor"):0.24;
+  geometria.precio = Number.isFinite(num("precioUnit"))?num("precioUnit"):1237.77;
+  geometria.volTotal = Number.isFinite(num("volTotalItem"))?num("volTotalItem"):0;
+
+  var ayuda=$("ayudaVolTotal");
+  if(geometria.volTotal>0){
+    ayuda.textContent="Definido: "+fmt(geometria.volTotal,2)+" m³";
+  }else{
+    ayuda.textContent="Vacío → se calculará del rango global";
+  }
+  return geometria;
+}
+
+/* =========================================================
+   MÁQUINAS
+   ========================================================= */
+function agregarMaquina(){
+  ocultarError();
+  var cod=txt("mCodigo").trim();
+  var ancho=num("mAncho");
+  var color=txt("mColor");
+  if(!cod){mostrarError("Ingresa el código de la máquina (ej: SP-500).");return;}
+  if(!Number.isFinite(ancho)||ancho<=0){mostrarError("El ancho típico debe ser mayor a cero.");return;}
+  if(maquinas.some(function(m){return m.codigo.toLowerCase()===cod.toLowerCase();})){
+    mostrarError("Ya existe una máquina con ese código.");return;
+  }
+  maquinas.push({codigo:cod, ancho:ancho, color:color});
+  $("mCodigo").value=""; $("mAncho").value=""; $("mColor").value="#004B87";
+  renderMaquinas();
+  renderFormSelectMaquinas();
+  renderTabla();
+}
+
+function eliminarMaquina(idx){
+  if(!confirm("¿Eliminar la máquina "+maquinas[idx].codigo+"?"))return;
+  maquinas.splice(idx,1);
+  renderMaquinas();
+  renderFormSelectMaquinas();
+  renderTabla();
+}
+
+function renderMaquinas(){
+  var cont=$("listaMaquinas");
+  if(maquinas.length===0){cont.innerHTML='<div class="aviso info" style="width:100%;margin:0">Aún no hay máquinas registradas. Agrega al menos una para autocompletar anchos.</div>';$("badgeMaquinas").textContent="0 máquinas";return;}
+  var html="";
+  maquinas.forEach(function(m,i){
+    html+='<div style="display:flex;align-items:center;gap:8px;background:#f5f9fc;border:1px solid #d5e0ea;border-radius:8px;padding:6px 12px;font-size:12.5px">'+
+      '<span style="width:14px;height:14px;border-radius:3px;background:'+m.color+';display:inline-block;border:1px solid rgba(0,0,0,.15)"></span>'+
+      '<b>'+m.codigo+'</b>'+
+      '<span style="color:var(--muted)">'+fmt(m.ancho,2)+' m</span>'+
+      '<button class="btn-x" style="width:20px;height:20px" onclick="eliminarMaquina('+i+')" title="Eliminar">×</button>'+
+    '</div>';
+  });
+  cont.innerHTML=html;
+  $("badgeMaquinas").textContent=maquinas.length+(maquinas.length===1?" máquina":" máquinas");
+}
+
+function renderFormSelectMaquinas(){
+  var sel=$("fMaquina");
+  var selFiltro=$("filtroMaquina");
+  var html='<option value="">— Elegir —</option>';
+  maquinas.forEach(function(m){html+='<option value="'+m.codigo+'">'+m.codigo+'</option>';});
+  sel.innerHTML=html;
+  var htmlF='<option value="todas">Todas</option>';
+  maquinas.forEach(function(m){htmlF+='<option value="'+m.codigo+'">'+m.codigo+'</option>';});
+  if(selFiltro)selFiltro.innerHTML=htmlF;
+}
+
+function autocompletarAncho(){
+  var cod=txt("fMaquina");
+  var m=maquinas.find(function(x){return x.codigo===cod;});
+  if(m){$("fAncho").value=m.ancho;}
+}
+
+/* =========================================================
+   AGREGAR TRAMO
+   ========================================================= */
+function agregarTramo(){
+  ocultarError();
+  var pIni=parseProg(txt("fIni"));
+  var pFin=parseProg(txt("fFin"));
+  var ancho=num("fAncho");
+  var maq=txt("fMaquina"), via=txt("fVia"), obs=txt("fObs"), fecha=txt("fFecha");
+
+  if(!Number.isFinite(pIni)){mostrarError("Ingresa la progresiva inicial (ej: 243+633).");return;}
+  if(!Number.isFinite(pFin)){mostrarError("Ingresa la progresiva final (ej: 243+654).");return;}
+  if(pFin<=pIni){mostrarError("La progresiva final debe ser mayor que la inicial.");return;}
+  if(!Number.isFinite(ancho)||ancho<=0){mostrarError("El ancho debe ser mayor a cero.");return;}
+  if(!maq){mostrarError("Selecciona la máquina que ejecutó el tramo.");return;}
+  if(!fecha){mostrarError("Ingresa la fecha del tramo.");return;}
+
+  var dist=pFin-pIni;
+  var vol=ancho*geometria.espesor*dist;
+  var monto=vol*geometria.precio;
+
+  tramos.push({
+    num:0, progIni:pIni, progFin:pFin, dist:dist,
+    maquina:maq, ancho:ancho, via:via, obs:obs, fecha:fecha,
+    vol:vol, monto:monto, volAcum:0, montoAcum:0
+  });
+
+  ordenarTramos();
+  limpiarFormTramo();
+  actualizarTodo();
+  $("fIni").focus();
+}
+
+function ordenarTramos(){
+  tramos.sort(function(a,b){
+    if(a.fecha < b.fecha) return -1;
+    if(a.fecha > b.fecha) return 1;
+    return a.progIni - b.progIni;
+  });
+  tramos.forEach(function(t,i){t.num=i+1;});
+  recalcularAcumulados();
+}
+
+function limpiarFormTramo(){
+  ["fIni","fFin","fAncho","fFecha"].forEach(function(id){$(id).value="";});
+  $("fMaquina").value="";
+  $("fObs").value="INTERNA";
+  actualizarLongitudViva();
+}
+
+function duplicarUltimo(){
+  if(tramos.length===0){mostrarError("Aún no hay tramos para duplicar.");return;}
+  var u=tramos[tramos.length-1];
+  $("fIni").value=fmtProg(u.progFin);
+  $("fFin").value=fmtProg(u.progFin+u.dist);
+  $("fMaquina").value=u.maquina;
+  $("fAncho").value=u.ancho;
+  $("fVia").value=u.via;
+  $("fObs").value=u.obs;
+  $("fFecha").value=u.fecha;
+  actualizarLongitudViva();
+  $("fIni").focus();
+}
+
+/* =========================================================
+   EDITAR TRAMO (TOTALMENTE EDITABLE)
+   ========================================================= */
+function editarCampo(idx, campo, valor, input){
+  var t=tramos[idx];
+  if(!t)return;
+  var ant=t[campo];
+  var n;
+
+  if(campo==="progIni"||campo==="progFin"){
+    n=parseProg(valor);
+    if(!Number.isFinite(n)||n<0){restaurar(input,ant);return;}
+    t[campo]=n;
+    if(t.progFin<=t.progIni){
+      restaurar(input,ant);
+      mostrarError("La progresiva final debe ser mayor que la inicial.");
+      return;
+    }
+    t.dist=t.progFin-t.progIni;
+    t.vol=t.ancho*geometria.espesor*t.dist;
+    t.monto=t.vol*geometria.precio;
+    if(input) input.value=fmtProg(n);
+  }else if(campo==="ancho"){
+    n=parseFloat(valor);
+    if(!Number.isFinite(n)||n<=0){restaurar(input,ant);return;}
+    t.ancho=n;
+    t.vol=t.ancho*geometria.espesor*t.dist;
+    t.monto=t.vol*geometria.precio;
+  }else if(campo==="fecha"){
+    t.fecha=valor;
+  }else if(campo==="maquina"){
+    t.maquina=valor;
+    var m=maquinas.find(function(x){return x.codigo===valor;});
+    if(m){ t.ancho=m.ancho; }
+    t.vol=t.ancho*geometria.espesor*t.dist;
+    t.monto=t.vol*geometria.precio;
+  }else if(campo==="via"){
+    t.via=valor;
+  }else if(campo==="obs"){
+    t.obs=valor;
+  }
+
+  if(input){
+    input.classList.add("modificado");
+    setTimeout(function(){input.classList.remove("modificado");},1500);
+  }
+  ordenarTramos();
+  actualizarTodo();
+}
+
+function restaurar(input, valor){
+  if(input){
+    input.value=(typeof valor==="number"&&valor>10000)?fmtProg(valor):valor;
+    input.classList.add("invalido");
+    setTimeout(function(){input.classList.remove("invalido");},1500);
+  }
+}
+
+function eliminarTramo(idx){
+  if(!confirm("¿Eliminar el tramo N° "+(idx+1)+" ("+fmtProg(tramos[idx].progIni)+" → "+fmtProg(tramos[idx].progFin)+")?"))return;
+  tramos.splice(idx,1);
+  ordenarTramos();
+  actualizarTodo();
+}
+
+/* =========================================================
+   ACUMULADOS
+   ========================================================= */
+function recalcularAcumulados(){
+  var volA=0, montoA=0;
+  tramos.forEach(function(t){
+    volA+=t.vol;
+    montoA+=t.monto;
+    t.volAcum=volA;
+    t.montoAcum=montoA;
+  });
+}
+
+/* =========================================================
+   ORDENAMIENTO TABLA
+   ========================================================= */
+function ordenarPor(campo){
+  if(ordenActual.campo===campo)ordenActual.asc=!ordenActual.asc;
+  else{ordenActual.campo=campo;ordenActual.asc=true;}
+  renderTabla();
+}
+
+/* =========================================================
+   RENDER TABLA CON FILTROS AVANZADOS
+   ========================================================= */
+function renderTabla(){
+  var filtroMaq=txt("filtroMaquina")||"todas";
+  var filtroVia=txt("filtroVia")||"todas";
+  var filtroMes=txt("filtroMes")||"todos";
+  var filtroAnio=txt("filtroAnio")||"todos";
+  
+  var selAnio = $("filtroAnio");
+  if (selAnio.options.length <= 1) {
+    var anios = new Set();
+    tramos.forEach(function(t){ if(t.fecha) anios.add(t.fecha.split("-")[0]); });
+    var aniosArr = Array.from(anios).sort();
+    aniosArr.forEach(function(a){
+      var opt = document.createElement("option");
+      opt.value = a;
+      opt.textContent = a;
+      selAnio.appendChild(opt);
+    });
+  }
+
+  var lista=tramos.map(function(t,i){return {t:t,i:i};});
+  
+  if(filtroMaq!=="todas")lista=lista.filter(function(o){return o.t.maquina===filtroMaq;});
+  if(filtroVia!=="todas")lista=lista.filter(function(o){return o.t.via===filtroVia;});
+  if(filtroMes!=="todos")lista=lista.filter(function(o){return o.t.fecha && o.t.fecha.split("-")[1]===filtroMes;});
+  if(filtroAnio!=="todos")lista=lista.filter(function(o){return o.t.fecha && o.t.fecha.split("-")[0]===filtroAnio;});
+
+  var cmp=ordenActual.campo;
+  lista.sort(function(a,b){
+    var va=a.t[cmp], vb=b.t[cmp];
+    if(typeof va==="string"&&typeof vb==="string") return ordenActual.asc?va.localeCompare(vb):vb.localeCompare(va);
+    return ordenActual.asc?(va-vb):(vb-va);
+  });
+
+  var html="";
+  lista.forEach(function(o){
+    var idx=o.i, t=o.t;
+    var clase="";
+    if(t.progFin>geometria.progFin&&geometria.progFin>0)clase="alerta";
+    html+='<tr class="'+clase+'">';
+    html+='<td><b>'+t.num+'</b></td>';
+    html+='<td class="celda-editable"><input class="celda-edit" type="text" data-idx="'+idx+'" data-campo="progIni" value="'+fmtProg(t.progIni)+'" onchange="editarCampo('+idx+',\'progIni\',this.value,this)" onblur="formatearInputProg(this)"></td>';
+    html+='<td class="celda-editable"><input class="celda-edit" type="text" data-idx="'+idx+'" data-campo="progFin" value="'+fmtProg(t.progFin)+'" onchange="editarCampo('+idx+',\'progFin\',this.value,this)" onblur="formatearInputProg(this)"></td>';
+    html+='<td class="num">'+fmt(t.dist,2)+'</td>';
+    
+    var selectMaq = '<select class="celda-edit" data-idx="'+idx+'" data-campo="maquina" onchange="editarCampo('+idx+',\'maquina\',this.value,this)">';
+    maquinas.forEach(function(m){ selectMaq += '<option value="'+m.codigo+'" '+(m.codigo===t.maquina?'selected':'')+'>'+m.codigo+'</option>'; });
+    selectMaq += '</select>';
+    html+='<td class="celda-editable">'+selectMaq+'</td>';
+    
+    html+='<td class="celda-editable"><input class="celda-edit" type="number" step="0.01" data-idx="'+idx+'" data-campo="ancho" value="'+t.ancho+'" onchange="editarCampo('+idx+',\'ancho\',this.value,this)"></td>';
+    
+    var selectVia = '<select class="celda-edit" data-idx="'+idx+'" data-campo="via" onchange="editarCampo('+idx+',\'via\',this.value,this)">'+
+      '<option value="IZQUIERDA" '+(t.via==="IZQUIERDA"?'selected':'')+'>IZQ</option>'+
+      '<option value="DERECHA" '+(t.via==="DERECHA"?'selected':'')+'>DER</option>'+
+      '<option value="COMPLETA" '+(t.via==="COMPLETA"?'selected':'')+'>COMP</option>'+
+    '</select>';
+    html+='<td class="celda-editable">'+selectVia+'</td>';
+    
+    var selectObs = '<select class="celda-edit" data-idx="'+idx+'" data-campo="obs" onchange="editarCampo('+idx+',\'obs\',this.value,this)">'+
+      '<option value="INTERNA" '+(t.obs==="INTERNA"?'selected':'')+'>INT</option>'+
+      '<option value="EXTERNA" '+(t.obs==="EXTERNA"?'selected':'')+'>EXT</option>'+
+      '<option value="PC" '+(t.obs==="PC"?'selected':'')+'>PC</option>'+
+    '</select>';
+    html+='<td class="celda-editable">'+selectObs+'</td>';
+    
+    html+='<td class="celda-editable"><input class="celda-edit" type="date" data-idx="'+idx+'" data-campo="fecha" value="'+t.fecha+'" onchange="editarCampo('+idx+',\'fecha\',this.value,this)" style="font-size:11px"></td>';
+    
+    html+='<td class="num">'+fmt(t.vol,2)+'</td>';
+    html+='<td class="num">'+fmt(t.monto,2)+'</td>';
+    html+='<td class="num">'+fmt(t.volAcum,2)+'</td>';
+    html+='<td class="num">'+fmt(t.montoAcum,2)+'</td>';
+    html+='<td class="no-print"><button class="btn-x" onclick="eliminarTramo('+idx+')" title="Eliminar">×</button></td>';
+    html+='</tr>';
+  });
+  if(tramos.length===0){
+    html='<tr><td colspan="14" style="text-align:center;padding:20px;color:#607d8b;font-style:italic;">Aún no hay tramos registrados. Usa el formulario superior para agregar el primero.</td></tr>';
+  }else if(lista.length===0){
+    html='<tr><td colspan="14" style="text-align:center;padding:20px;color:#607d8b;font-style:italic;">Ningún tramo coincide con el filtro aplicado.</td></tr>';
+  }
+  $("cuerpoTramos").innerHTML=html;
+  $("badgeTramos").textContent=tramos.length+(tramos.length===1?" tramo registrado":" tramos registrados");
+}
+
+/* =========================================================
+   VOLUMEN TOTAL DEL ITEM
+   ========================================================= */
+function calcularVolTotalItem(){
+  if(geometria.volTotal>0)return geometria.volTotal;
+  if(geometria.progFin>geometria.progIni && geometria.espesor>0){
+    var anchoProm=maquinas.length>0?maquinas.reduce(function(s,m){return s+m.ancho;},0)/maquinas.length:4.5;
+    return (geometria.progFin-geometria.progIni)*anchoProm*geometria.espesor;
+  }
+  return 0;
+}
+
+/* =========================================================
+   ACTUALIZAR TODO
+   ========================================================= */
+function actualizarTodo(){
+  renderTabla();
+  renderResumen();
+  renderPapiro();
+  renderGraficos();
+}
+
+/* =========================================================
+   RESUMEN
+   ========================================================= */
+function calcular(){
+  var totalVol=tramos.reduce(function(s,t){return s+t.vol;},0);
+  var totalMonto=tramos.reduce(function(s,t){return s+t.monto;},0);
+  var volTotal=calcularVolTotalItem();
+  var pct=volTotal>0?(totalVol/volTotal)*100:0;
+  var restante=volTotal-totalVol;
+  var montoTotal=volTotal*geometria.precio;
+  var montoRestante=montoTotal-totalMonto;
+
+  var porMaq={};
+  tramos.forEach(function(t){
+    if(!porMaq[t.maquina])porMaq[t.maquina]={vol:0,monto:0,n:0};
+    porMaq[t.maquina].vol+=t.vol;
+    porMaq[t.maquina].monto+=t.monto;
+    porMaq[t.maquina].n++;
+  });
+
+  var porVia={IZQUIERDA:{vol:0,monto:0,n:0},DERECHA:{vol:0,monto:0,n:0},COMPLETA:{vol:0,monto:0,n:0}};
+  tramos.forEach(function(t){
+    if(porVia[t.via]){porVia[t.via].vol+=t.vol;porVia[t.via].monto+=t.monto;porVia[t.via].n++;}
+  });
+
+  var porFecha={};
+  tramos.forEach(function(t){
+    if(!porFecha[t.fecha])porFecha[t.fecha]={vol:0,monto:0,n:0};
+    porFecha[t.fecha].vol+=t.vol;
+    porFecha[t.fecha].monto+=t.monto;
+    porFecha[t.fecha].n++;
+  });
+
+  return {
+    totalTramos:tramos.length, totalVol:totalVol, totalMonto:totalMonto,
+    volTotal:volTotal, montoTotal:montoTotal, pct:pct,
+    restante:restante, montoRestante:montoRestante,
+    porMaq:porMaq, porVia:porVia, porFecha:porFecha
+  };
+}
+
+function renderResumen(){
+  var c=calcular();
+  var html="";
+  html+='<div class="tarjeta-res viajes"><div class="titulo">Tramos registrados</div><div class="valor">'+c.totalTramos+'</div></div>';
+  html+='<div class="tarjeta-res acum"><div class="titulo">Volumen ejecutado</div><div class="valor">'+fmt(c.totalVol,2)+'<span class="unidad">m³</span></div></div>';
+  html+='<div class="tarjeta-res obra"><div class="titulo">Volumen total del ítem</div><div class="valor">'+fmt(c.volTotal,2)+'<span class="unidad">m³</span></div></div>';
+  var claseRest=c.restante<0?"cierre negativo":"cierre";
+  html+='<div class="tarjeta-res '+claseRest+'"><div class="titulo">Volumen restante</div><div class="valor">'+fmt(c.restante,2)+'<span class="unidad">m³</span></div></div>';
+  html+='<div class="tarjeta-res '+(c.pct>=100?"ok":"acum")+'"><div class="titulo">Avance físico</div><div class="valor">'+fmt(c.pct,1)+'<span class="unidad">%</span></div></div>';
+  html+='<div class="tarjeta-res acum"><div class="titulo">Monto ejecutado</div><div class="valor">'+fmt(c.totalMonto,2)+'<span class="unidad">Bs</span></div></div>';
+  html+='<div class="tarjeta-res obra"><div class="titulo">Monto total ítem</div><div class="valor">'+fmt(c.montoTotal,2)+'<span class="unidad">Bs</span></div></div>';
+  html+='<div class="tarjeta-res '+(c.montoRestante<0?"cierre negativo":"cierre")+'"><div class="titulo">Monto restante</div><div class="valor">'+fmt(c.montoRestante,2)+'<span class="unidad">Bs</span></div></div>';
+  $("tarjetasResumen").innerHTML=html;
+
+  var vh="";
+  if(c.totalTramos===0){
+    vh='<div class="aviso info"><b>ℹ️</b> Aún no se han registrado tramos.</div>';
+  }else if(c.restante>0){
+    vh='<div class="aviso"><b>🚧 Obra en curso:</b> Aún faltan <b>'+fmt(c.restante,2)+' m³</b>. Avance: <b>'+fmt(c.pct,1)+'%</b>.</div>';
+  }else if(c.restante>-0.5){
+    vh='<div class="aviso ok"><b>✓ Obra completa:</b> El volumen ejecutado coincide con el total del ítem.</div>';
+  }else{
+    vh='<div class="aviso error visible"><b>⚠ Exceso de volumen:</b> Se ejecutó <b>'+fmt(Math.abs(c.restante),2)+' m³</b> por encima del volumen del ítem.</div>';
+  }
+  $("zonaVeredicto").innerHTML=vh;
+}
+
+/* =========================================================
+   PAPIRO SVG (ESCALAS DINÁMICAS Y ANCHOS REALES)
+   ========================================================= */
+function renderPapiro(){
+  var svg=$("papiroSvg");
+  if(!svg)return;
+
+  var W=1200*zoomPapiro;
+  var H=300;
+  var margen={top:30, right:20, bottom:50, left:110};
+  var pW=W-margen.left-margen.right;
+  var pH=H-margen.top-margen.bottom;
+  var alturaVia = pH/2;
+
+  var pMin=geometria.progIni;
+  var pMax=geometria.progFin;
+  if(tramos.length>0){
+    var minT=Math.min.apply(null,tramos.map(function(t){return t.progIni;}));
+    var maxT=Math.max.apply(null,tramos.map(function(t){return t.progFin;}));
+    if(!pMin||pMin>minT)pMin=Math.floor(minT/100)*100;
+    if(!pMax||pMax<maxT)pMax=Math.ceil(maxT/100)*100;
+  }
+  if(!pMin||!pMax||pMax<=pMin){pMin=0;pMax=1000;}
+
+  function xEsc(prog){
+    return margen.left + ((prog-pMin)/(pMax-pMin))*pW;
+  }
+
+  var html="";
+  html+='<title>Papiro de obra - Pavimento rígido</title>';
+  
+  html+='<rect x="'+margen.left+'" y="'+margen.top+'" width="'+pW+'" height="'+pH+'" fill="#fafcfd" stroke="#e0e8f0"/>';
+  html+='<rect x="'+margen.left+'" y="'+margen.top+'" width="'+pW+'" height="'+alturaVia+'" fill="#f0f7f2" opacity="0.5"/>';
+  html+='<rect x="'+margen.left+'" y="'+(margen.top+alturaVia)+'" width="'+pW+'" height="'+alturaVia+'" fill="#fffbf0" opacity="0.5"/>';
+
+  // Etiquetas de vía
+  html+='<text x="'+(margen.left-8)+'" y="'+(margen.top+alturaVia/2)+'" text-anchor="end" font-size="11" font-weight="bold" fill="#1e7a4a">VÍA IZQUIERDA</text>';
+  html+='<text x="'+(margen.left-8)+'" y="'+(margen.top+alturaVia+alturaVia/2)+'" text-anchor="end" font-size="11" font-weight="bold" fill="#c05621">VÍA DERECHA</text>';
+  html+='<line x1="'+margen.left+'" y1="'+(margen.top+alturaVia)+'" x2="'+(margen.left+pW)+'" y2="'+(margen.top+alturaVia)+'" stroke="#78909c" stroke-width="1.5" stroke-dasharray="4 3"/>';
+
+  /* ESCALA DINÁMICA DE PROGRESIVAS */
+  var pxPorMetro = pW / (pMax - pMin);
+  var paso = 100;
+  var pasosPosibles = [100, 200, 500, 1000, 2000, 5000, 10000];
+  for(var i=0; i<pasosPosibles.length; i++){
+    if(pasosPosibles[i] * pxPorMetro >= 80){
+      paso = pasosPosibles[i];
+      break;
+    }
+  }
+  if(paso * pxPorMetro < 80) paso = pasosPosibles[pasosPosibles.length-1];
+
+  var inicio = Math.floor(pMin / paso) * paso;
+  for(var p=inicio; p<=pMax; p+=paso){
+    var x=xEsc(p);
+    if(x<margen.left-1||x>margen.left+pW+1)continue;
+    html+='<line x1="'+x+'" y1="'+margen.top+'" x2="'+x+'" y2="'+(margen.top+pH)+'" stroke="#e8edf2" stroke-width="0.8"/>';
+    html+='<text x="'+x+'" y="'+(margen.top+pH+16)+'" text-anchor="middle" font-size="10" fill="#546e7a">'+fmtProg(p)+'</text>';
+    html+='<line x1="'+x+'" y1="'+(margen.top-4)+'" x2="'+x+'" y2="'+margen.top+'" stroke="#90a4ae" stroke-width="1"/>';
+  }
+
+  html+='<text x="'+(margen.left+pW/2)+'" y="'+(H-6)+'" text-anchor="middle" font-size="11" font-weight="bold" fill="#263238">Progresiva (m)</text>';
+  html+='<text x="15" y="'+(margen.top+pH/2)+'" text-anchor="middle" font-size="11" font-weight="bold" fill="#263238" transform="rotate(-90 15 '+(margen.top+pH/2)+')">Vía</text>';
+
+  // DIBUJAR TRAMOS
+  tramos.forEach(function(t){
+    var x1=xEsc(t.progIni);
+    var x2=xEsc(t.progFin);
+    var w=Math.max(1,x2-x1);
+    
+    // Color según máquina
+    var maq = maquinas.find(function(m){return m.codigo === t.maquina;});
+    var colorFill = maq ? maq.color : "#1e7a4a";
+
+    // Altura proporcional al ancho real (hasta 10m escalan a toda la altura de la vía)
+    var maxAncho = 10;
+    var altoBarra = (t.ancho/maxAncho) * alturaVia;
+    if(altoBarra < 5) altoBarra = 5;
+
+    var esIzq = t.via==="IZQUIERDA" || t.via==="COMPLETA";
+    var esDer = t.via==="DERECHA" || t.via==="COMPLETA";
+
+    // Lógica para pegar al eje según INTERNA/EXTERNA/PC
+    if(esIzq){
+      var yIzq;
+      if(t.obs === "INTERNA") yIzq = margen.top + alturaVia/2; // Pegado al eje (hacia arriba)
+      else if(t.obs === "EXTERNA") yIzq = margen.top + alturaVia/2 - altoBarra; // Pegado al borde superior
+      else yIzq = margen.top + alturaVia/2 - altoBarra/2; // PC (Centrado)
+      
+      html+='<rect x="'+x1+'" y="'+yIzq+'" width="'+w+'" height="'+altoBarra+'" fill="'+colorFill+'" fill-opacity="0.85" stroke="#263238" stroke-width="0.8"><title>'+fmtProg(t.progIni)+' → '+fmtProg(t.progFin)+'\n'+t.maquina+' ('+t.obs+') | '+fmt(t.ancho,2)+' m | '+fmt(t.vol,2)+' m³</title></rect>';
+    }
+    if(esDer){
+      var yDer;
+      if(t.obs === "INTERNA") yDer = margen.top + alturaVia + alturaVia/2 - altoBarra; // Pegado al eje (hacia abajo)
+      else if(t.obs === "EXTERNA") yDer = margen.top + alturaVia + alturaVia/2; // Pegado al borde inferior
+      else yDer = margen.top + alturaVia + alturaVia/2 - altoBarra/2; // PC (Centrado)
+      
+      html+='<rect x="'+x1+'" y="'+yDer+'" width="'+w+'" height="'+altoBarra+'" fill="'+colorFill+'" fill-opacity="0.85" stroke="#263238" stroke-width="0.8"><title>'+fmtProg(t.progIni)+' → '+fmtProg(t.progFin)+'\n'+t.maquina+' ('+t.obs+') | '+fmt(t.ancho,2)+' m | '+fmt(t.vol,2)+' m³</title></rect>';
+    }
+  });
+
+  // Frente de avance
+  var progMaxReg=0;
+  tramos.forEach(function(t){ if(t.progFin>progMaxReg) progMaxReg=t.progFin; });
+  if(progMaxReg>0){
+    var xF=xEsc(progMaxReg);
+    if(xF>=margen.left && xF<=margen.left+pW){
+      html+='<line x1="'+xF+'" y1="'+margen.top+'" x2="'+xF+'" y2="'+(margen.top+pH)+'" stroke="#c62828" stroke-width="2" stroke-dasharray="5 3"/>';
+      html+='<text x="'+xF+'" y="'+(margen.top-10)+'" text-anchor="middle" font-size="10" font-weight="bold" fill="#c62828">FRENTE</text>';
+    }
+  }
+
+  html+='<rect x="'+margen.left+'" y="'+margen.top+'" width="'+pW+'" height="'+pH+'" fill="none" stroke="#263238" stroke-width="1.5"/>';
+
+  svg.setAttribute("viewBox", "0 0 "+W+" 300");
+  svg.innerHTML=html;
+
+  // Leyenda dinámica
+  var leg='';
+  maquinas.forEach(function(m){
+    leg+='<div class="item"><span class="swatch" style="background:'+m.color+'"></span> '+m.codigo+'</div>';
+  });
+  leg+='<div class="item"><span class="swatch" style="background:#c62828;height:2px"></span> Frente de avance</div>';
+  $("papiroLeyenda").innerHTML=leg;
+}
+
+function ajustarZoomPapiro(f){
+  zoomPapiro=Math.max(0.3, Math.min(3, zoomPapiro*f));
+  var svg=$("papiroSvg");
+  svg.style.width=(100*zoomPapiro)+"%";
+  $("zoomLabel").textContent = Math.round(zoomPapiro*100)+"%";
+  renderPapiro();
+}
+
+/* =========================================================
+   EXPORTAR PAPIRO A PNG
+   ========================================================= */
+function exportarPapiroPNG(){
+  var svg=$("papiroSvg");
+  if(!svg)return;
+  var svgData=new XMLSerializer().serializeToString(svg);
+  var canvas=document.createElement("canvas");
+  var ratio=2400/svg.viewBox.baseVal.width;
+  canvas.width=2400;
+  canvas.height=svg.viewBox.baseVal.height*ratio;
+  var ctx=canvas.getContext("2d");
+  var img=new Image();
+  var blob=new Blob([svgData],{type:"image/svg+xml;charset=utf-8"});
+  var url=URL.createObjectURL(blob);
+  img.onload=function(){
+    ctx.fillStyle="#ffffff";ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.drawImage(img,0,0,canvas.width,canvas.height);
+    URL.revokeObjectURL(url);
+    var pngUrl=canvas.toDataURL("image/png");
+    var a=document.createElement("a");
+    a.href=pngUrl;
+    a.download="papiro_pavimento_rigido_"+(txt("nombreObra").replace(/[^a-z0-9]/gi,"_")||"obra")+".png";
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+  };
+  img.onerror=function(){
+    URL.revokeObjectURL(url);
+    alert("Error al exportar. Prueba con otro navegador.");
+  };
+  img.src=url;
+}
+
+/* =========================================================
+   GRÁFICOS
+   ========================================================= */
+function renderGraficos(){
+  var c=calcular();
+  dibujarCurvaS(c);
+  dibujarBarras("graficoMaquinas",c.porMaq,"m³");
+  dibujarBarras("graficoVia",c.porVia,"m³");
+}
+
+function dibujarCurvaS(c){
+  var svg=$("graficoCurvaS");
+  if(!svg)return;
+  var W=900,H=300;
+  var m={top:30,right:30,bottom:50,left:70};
+  var pW=W-m.left-m.right, pH=H-m.top-m.bottom;
+
+  var fechas=Object.keys(c.porFecha).sort();
+  if(fechas.length===0){
+    svg.innerHTML='<text x="450" y="150" text-anchor="middle" font-size="13" fill="#90a4ae" font-style="italic">Sin datos</text>';
+    return;
+  }
+
+  var volAcum=[];
+  var acum=0;
+  fechas.forEach(function(f){acum+=c.porFecha[f].vol;volAcum.push(acum);});
+  var maxVol=Math.max.apply(null,volAcum);
+  var maxVolTotal=Math.max(maxVol,c.volTotal);
+
+  function xEsc(i){return m.left+(fechas.length===1?pW/2:(i/(fechas.length-1))*pW);}
+  function yEsc(v){return m.top+pH-((v-0)/(maxVolTotal||1))*pH;}
+
+  var html="";
+  html+='<rect x="'+m.left+'" y="'+m.top+'" width="'+pW+'" height="'+pH+'" fill="#fafcfd" stroke="#e0e8f0"/>';
+
+  var pasosY=5;
+  for(var i=0;i<=pasosY;i++){
+    var yv=(maxVolTotal||1)*i/pasosY;
+    var yp=yEsc(yv);
+    html+='<line x1="'+m.left+'" y1="'+yp+'" x2="'+(m.left+pW)+'" y2="'+yp+'" stroke="#e8edf2"/>';
+    html+='<text x="'+(m.left-8)+'" y="'+(yp+4)+'" text-anchor="end" font-size="10" fill="#546e7a">'+fmt0(yv)+'</text>';
+  }
+
+  if(maxVolTotal>0){
+    var yMeta=yEsc(maxVolTotal);
+    html+='<line x1="'+m.left+'" y1="'+yMeta+'" x2="'+(m.left+pW)+'" y2="'+yMeta+'" stroke="#c62828" stroke-width="1.5" stroke-dasharray="5 3"/>';
+    html+='<text x="'+(m.left+pW-4)+'" y="'+(yMeta-4)+'" text-anchor="end" font-size="9" fill="#c62828" font-weight="bold">Meta: '+fmt0(maxVolTotal)+' m³</text>';
+  }
+
+  var path="";
+  volAcum.forEach(function(v,i){
+    path+=(i===0?"M ":" L ")+xEsc(i)+" "+yEsc(v);
+  });
+  html+='<path d="'+path+'" fill="none" stroke="#087f5b" stroke-width="2.5"/>';
+
+  volAcum.forEach(function(v,i){
+    html+='<circle cx="'+xEsc(i)+'" cy="'+yEsc(v)+'" r="4" fill="#087f5b" stroke="#fff" stroke-width="1.5"><title>'+fechaISOaLocal(fechas[i])+': '+fmt(v,2)+' m³</title></circle>';
+    if(fechas.length<=15){
+      html+='<text x="'+xEsc(i)+'" y="'+(yEsc(v)-10)+'" text-anchor="middle" font-size="9" fill="#087f5b" font-weight="bold">'+fmt0(v)+'</text>';
+    }
+  });
+
+  html+='<line x1="'+m.left+'" y1="'+(m.top+pH)+'" x2="'+(m.left+pW)+'" y2="'+(m.top+pH)+'" stroke="#263238" stroke-width="2"/>';
+  html+='<line x1="'+m.left+'" y1="'+m.top+'" x2="'+m.left+'" y2="'+(m.top+pH)+'" stroke="#263238" stroke-width="2"/>';
+
+  var cadN=Math.max(1,Math.ceil(fechas.length/8));
+  fechas.forEach(function(f,i){
+    if(i===0||i===fechas.length-1||i%cadN===0){
+      html+='<text x="'+xEsc(i)+'" y="'+(m.top+pH+18)+'" text-anchor="middle" font-size="9" fill="#546e7a">'+fechaISOaLocal(f)+'</text>';
+    }
+  });
+  html+='<text x="'+(m.left+pW/2)+'" y="'+(H-6)+'" text-anchor="middle" font-size="11" font-weight="bold" fill="#263238">Fecha</text>';
+  html+='<text x="15" y="'+(m.top+pH/2)+'" text-anchor="middle" font-size="11" font-weight="bold" fill="#263238" transform="rotate(-90 15 '+(m.top+pH/2)+')">Volumen acumulado (m³)</text>';
+
+  svg.innerHTML=html;
+}
+
+function dibujarBarras(svgId, datos, unidad){
+  var svg=$(svgId);
+  if(!svg)return;
+  var W=900,H=300;
+  var m={top:30,right:30,bottom:50,left:70};
+  var pW=W-m.left-m.right, pH=H-m.top-m.bottom;
+
+  var claves=Object.keys(datos).filter(function(k){return datos[k].vol>0;});
+  if(claves.length===0){
+    svg.innerHTML='<text x="450" y="150" text-anchor="middle" font-size="13" fill="#90a4ae" font-style="italic">Sin datos</text>';
+    return;
+  }
+
+  var maxVol=Math.max.apply(null,claves.map(function(k){return datos[k].vol;}));
+
+  var html="";
+  html+='<rect x="'+m.left+'" y="'+m.top+'" width="'+pW+'" height="'+pH+'" fill="#fafcfd" stroke="#e0e8f0"/>';
+
+  var pasosY=5;
+  for(var i=0;i<=pasosY;i++){
+    var yv=(maxVol||1)*i/pasosY;
+    var yp=m.top+pH-(yv/(maxVol||1))*pH;
+    html+='<line x1="'+m.left+'" y1="'+yp+'" x2="'+(m.left+pW)+'" y2="'+yp+'" stroke="#e8edf2"/>';
+    html+='<text x="'+(m.left-8)+'" y="'+(yp+4)+'" text-anchor="end" font-size="10" fill="#546e7a">'+fmt0(yv)+'</text>';
+  }
+
+  var anchoB=pW/claves.length;
+  var colores=["#004B87","#087f5b","#c05621","#6a1b9a","#1976d2","#546e7a"];
+  claves.forEach(function(k,i){
+    var x=m.left+i*anchoB+anchoB*0.15;
+    var alto=(datos[k].vol/(maxVol||1))*pH;
+    var y=m.top+pH-alto;
+    var color=colores[i%colores.length];
+    html+='<rect x="'+x+'" y="'+y+'" width="'+(anchoB*0.7)+'" height="'+alto+'" fill="'+color+'" rx="3"><title>'+k+': '+fmt(datos[k].vol,2)+' '+unidad+'</title></rect>';
+    html+='<text x="'+(x+anchoB*0.35)+'" y="'+(y-6)+'" text-anchor="middle" font-size="10" font-weight="bold" fill="'+color+'">'+fmt0(datos[k].vol)+'</text>';
+    html+='<text x="'+(x+anchoB*0.35)+'" y="'+(m.top+pH+18)+'" text-anchor="middle" font-size="10" fill="#37474f">'+k+'</text>';
+    html+='<text x="'+(x+anchoB*0.35)+'" y="'+(m.top+pH+32)+'" text-anchor="middle" font-size="9" fill="#90a4ae">'+datos[k].n+' tramos</text>';
+  });
+
+  html+='<line x1="'+m.left+'" y1="'+(m.top+pH)+'" x2="'+(m.left+pW)+'" y2="'+(m.top+pH)+'" stroke="#263238" stroke-width="2"/>';
+  html+='<line x1="'+m.left+'" y1="'+m.top+'" x2="'+m.left+'" y2="'+(m.top+pH)+'" stroke="#263238" stroke-width="2"/>';
+
+  svg.innerHTML=html;
+}
+
+/* =========================================================
+   GUARDAR / ABRIR / CSV / LIMPIAR
+   ========================================================= */
+function recolectarEstado(){
+  return {
+    version:"1.4",
+    aplicacion:"Control de Avance de Obra - Pavimento Rígido",
+    autores:[
+      "ING. JOSÉ EDGAR CAMPOS CESPEDES - RNI: 30-222 - TEL: +591 73433166",
+      "ING. HECTOR ERNESTO GALVEZ RIBERIN - RNI: 17-819 - TEL: +591 76925947"
+    ],
+    fechaGuardado:new Date().toISOString(),
+    obra:{
+      nombre:txt("nombreObra"),
+      progIniGlobal:txt("progIniGlobal"),
+      progFinGlobal:txt("progFinGlobal"),
+      espesor:txt("espesor"),
+      precioUnit:txt("precioUnit"),
+      volTotalItem:txt("volTotalItem"),
+      fechaInicioObra:txt("fechaInicioObra"),
+      fechaFinObra:txt("fechaFinObra")
+    },
+    maquinas:maquinas.map(function(m){return {codigo:m.codigo, ancho:m.ancho, color:m.color};}),
+    tramos:tramos.map(function(t){
+      return {
+        num:t.num, progIni:t.progIni, progFin:t.progFin, dist:t.dist,
+        maquina:t.maquina, ancho:t.ancho, via:t.via, obs:t.obs, fecha:t.fecha,
+        vol:t.vol, monto:t.monto
+      };
+    })
+  };
+}
+
+function guardarProyecto(){
+  ocultarError();
+  if(tramos.length===0&&maquinas.length===0){
+    mostrarError("No hay datos para guardar.");return;
+  }
+  var estado=recolectarEstado();
+  var json=JSON.stringify(estado,null,2);
+  var fecha=txt("fechaInicioObra")||hoyISO();
+  var nombre="proyecto.json"; // Nombre estandarizado
+  var blob=new Blob([json],{type:"application/json;charset=utf-8"});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a");
+  a.href=url;a.download=nombre;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  var ind=$("indicadorGuardado");
+  $("textoGuardado").textContent="Guardado: "+nombre;
+  ind.classList.add("visible");
+  setTimeout(function(){ind.classList.remove("visible");},4000);
+}
+
+function abrirProyecto(){
+  ocultarError();
+  $("inputArchivo").value="";
+  $("inputArchivo").click();
+}
+
+function cargarEstado(data, silencioso){
+  if(!data||typeof data!=="object"){
+    if(!silencioso)mostrarError("El archivo no contiene datos válidos.");
+    return false;
+  }
+  if(data.obra){
+    $("nombreObra").value=data.obra.nombre||"";
+    $("progIniGlobal").value=data.obra.progIniGlobal||"";
+    $("progFinGlobal").value=data.obra.progFinGlobal||"";
+    $("espesor").value=data.obra.espesor||"0.24";
+    $("precioUnit").value=data.obra.precioUnit||"1237.77";
+    $("volTotalItem").value=data.obra.volTotalItem||"";
+    $("fechaInicioObra").value=data.obra.fechaInicioObra||"";
+    $("fechaFinObra").value=data.obra.fechaFinObra||"";
+  }
+  maquinas=[];
+  if(Array.isArray(data.maquinas)){
+    maquinas=data.maquinas.map(function(m){
+      return {codigo:m.codigo||"", ancho:parseFloat(m.ancho)||0, color:m.color||"#004B87"};
+    });
+  }
+  tramos=[];
+  if(Array.isArray(data.tramos)){
+    tramos=data.tramos.map(function(t){
+      return {
+        num:t.num||0, progIni:parseFloat(t.progIni)||0, progFin:parseFloat(t.progFin)||0,
+        dist:parseFloat(t.dist)||0, maquina:t.maquina||"", ancho:parseFloat(t.ancho)||0,
+        via:t.via||"IZQUIERDA", obs:t.obs||"INTERNA", fecha:t.fecha||"",
+        vol:parseFloat(t.vol)||0, monto:parseFloat(t.monto)||0,
+        volAcum:0, montoAcum:0
+      };
+    });
+  }
+  leerEstado();
+  ordenarTramos();
+  renderMaquinas();
+  renderFormSelectMaquinas();
+  actualizarTodo();
+  return true;
+}
+
+function exportarCSV(){
+  ocultarError();
+  if(tramos.length===0){mostrarError("No hay tramos para exportar.");return;}
+  var c=calcular();
+  var lineas=[];
+  lineas.push(["CONTROL DE AVANCE DE OBRA - PAVIMENTO RÍGIDO"]);
+  lineas.push(["ING. JOSÉ EDGAR CAMPOS CESPEDES - RNI: 30-222 - TEL: +591 73433166"]);
+  lineas.push(["ING. HECTOR ERNESTO GALVEZ RIBERIN - RNI: 17-819 - TEL: +591 76925947"]);
+  lineas.push([]);
+  lineas.push(["Obra",txt("nombreObra")]);
+  lineas.push(["Prog. inicial global",txt("progIniGlobal")]);
+  lineas.push(["Prog. final global",txt("progFinGlobal")]);
+  lineas.push(["Espesor (m)",txt("espesor")]);
+  lineas.push(["Precio unitario (Bs/m³)",txt("precioUnit")]);
+  lineas.push(["Volumen total ítem (m³)",fmt(c.volTotal,2)]);
+  lineas.push([]);
+  lineas.push(["RESUMEN"]);
+  lineas.push(["Tramos registrados",c.totalTramos]);
+  lineas.push(["Volumen ejecutado (m³)",fmt(c.totalVol,2)]);
+  lineas.push(["Monto ejecutado (Bs)",fmt(c.totalMonto,2)]);
+  lineas.push(["Avance físico (%)",fmt(c.pct,2)]);
+  lineas.push(["Volumen restante (m³)",fmt(c.restante,2)]);
+  lineas.push(["Monto restante (Bs)",fmt(c.montoRestante,2)]);
+  lineas.push([]);
+  lineas.push(["DETALLE DE TRAMOS"]);
+  lineas.push(["N°","Prog. Ini","Prog. Fin","Distancia (m)","Máquina","Ancho (m)","Vía","Ubicación","Fecha","Volumen (m³)","Monto (Bs)"]);
+  tramos.forEach(function(t){
+    lineas.push([t.num,fmtProg(t.progIni),fmtProg(t.progFin),fmt(t.dist,2),t.maquina,fmt(t.ancho,2),t.via,t.obs,t.fecha,fmt(t.vol,2),fmt(t.monto,2)]);
+  });
+  var csv=lineas.map(function(f){
+    return f.map(function(c){
+      var s=String(c===undefined||c===null?"":c);
+      if(s.indexOf(";")>=0||s.indexOf('"')>=0||s.indexOf("\n")>=0){s='"'+s.replace(/"/g,'""')+'"';}
+      return s;
+    }).join(";");
+  }).join("\r\n");
+  var blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a");
+  a.href=url;
+  a.download="avance_pavimento_"+(txt("fechaInicioObra")||"sin_fecha")+".csv";
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function limpiarTodo(){
+  if(!confirm("¿Borrar TODOS los datos del proyecto actual?\n\nEsta acción no se puede deshacer.\n\nSugerencia: guarda primero con 💾 Guardar."))return;
+  ["nombreObra","progIniGlobal","progFinGlobal","volTotalItem","fechaInicioObra","fechaFinObra","fIni","fFin","fAncho","fFecha","mCodigo","mAncho"].forEach(function(id){if($(id))$(id).value="";});
+  $("espesor").value="0.24";
+  $("precioUnit").value="1237.77";
+  tramos=[];maquinas=[];
+  renderMaquinas();
+  renderFormSelectMaquinas();
+  leerEstado();
+  actualizarTodo();
+  ocultarError();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function nuevoProyecto(){
+  if(tramos.length>0&&!confirm("Hay tramos registrados. ¿Iniciar un nuevo proyecto?\n\nSugerencia: guarda primero con 💾 Guardar."))return;
+  location.reload();
+}
+
+function imprimirResumen(){
+  var secciones=document.querySelectorAll(".seccion");
+  var estadoPrev=[];
+  secciones.forEach(function(s,i){
+    var h2=s.querySelector("h2");
+    if(h2&&(h2.textContent.indexOf("Registro de avance")>=0||
+            h2.textContent.indexOf("Gráficos")>=0)){
+      estadoPrev.push({el:s,display:s.style.display});
+      s.style.display="none";
+    }
+  });
+  window.print();
+  setTimeout(function(){estadoPrev.forEach(function(o){o.el.style.display=o.style.display||"";});},500);
+}
+
+/* =========================================================
+   SINCRONIZAR
+   ========================================================= */
+var _sinc=debounce(function(){
+  leerEstado();
+  if(tramos.length>0)recalcularAcumulados();
+  actualizarTodo();
+},180);
+function sincronizarYRenderizar(){_sinc();}
+
+/* =========================================================
+   TECLADO
+   ========================================================= */
+document.addEventListener("keydown",function(e){
+  if(e.key==="Enter"){
+    var activo=document.activeElement;
+    if(activo&&activo.closest(".form-viaje")&&activo.tagName!=="BUTTON"){
+      e.preventDefault();
+      if(activo.id==="mAncho")agregarMaquina();
+      else agregarTramo();
+      return;
+    }
+    if(activo&&activo.classList.contains("celda-edit")){
+      e.preventDefault();
+      activo.blur();
+      var todos=Array.prototype.slice.call(document.querySelectorAll(".celda-edit"));
+      var idx=todos.indexOf(activo);
+      if(idx>=0&&idx<todos.length-1){
+        setTimeout(function(){todos[idx+1].focus();todos[idx+1].select();},50);
+      }
+      return;
+    }
+  }
+});
+
+/* =========================================================
+   INICIALIZACIÓN
+   ========================================================= */
+window.addEventListener("load",function(){
+  var hoy=new Date();
+  var hoyIso=hoy.getFullYear()+"-"+String(hoy.getMonth()+1).padStart(2,"0")+"-"+String(hoy.getDate()).padStart(2,"0");
+  $("fechaInicioObra").value=hoyIso;
+  $("fFecha").value=hoyIso;
+
+  if(maquinas.length===0){
+    maquinas=[
+      {codigo:"SP-500",ancho:4.5,color:"#004B87"},
+      {codigo:"SP-1600",ancho:8.23,color:"#6a1b9a"}
+    ];
+  }
+  renderMaquinas();
+  renderFormSelectMaquinas();
+  leerEstado();
+  actualizarTodo();
+
+  var input=$("inputArchivo");
+  if(input){
+    input.addEventListener("change",function(e){
+      var file=e.target.files&&e.target.files[0];
+      if(!file)return;
+      var reader=new FileReader();
+      reader.onload=function(ev){
+        try{
+          var data=JSON.parse(ev.target.result);
+          cargarEstado(data,false);
+        }catch(err){mostrarError("Archivo inválido o dañado: "+err.message);}
+      };
+      reader.readAsText(file,"utf-8");
+    });
+  }
+
+  // ==========================================
+  // CARGA AUTOMÁTICA AL INICIAR
+  // Intenta traer el JSON de GitHub (data/proyecto.json)
+  // ==========================================
+  actualizarDesdeServidor(true);
+});
+</script>
+
+</body>
+</html>

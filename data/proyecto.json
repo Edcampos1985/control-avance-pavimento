@@ -1,11 +1,11 @@
 {
-  "version": "1.3",
+  "version": "1.4",
   "aplicacion": "Control de Avance de Obra - Pavimento Rígido",
   "autores": [
     "ING. JOSÉ EDGAR CAMPOS CESPEDES - RNI: 30-222 - TEL: +591 73433166",
     "ING. HECTOR ERNESTO GALVEZ RIBERIN - RNI: 17-819 - TEL: +591 76925947"
   ],
-  "fechaGuardado": "2026-11-06T21:48:15.211Z",
+  "fechaGuardado": "2026-11-06T23:54:53.169Z",
   "obra": {
     "nombre": "Oruro-Challapata",
     "progIniGlobal": "235+266",
@@ -13,8 +13,8 @@
     "espesor": "0.24",
     "precioUnit": "1237.77",
     "volTotalItem": "105915.18",
-    "fechaInicioObra": "2024-01-01",
-    "fechaFinObra": "2028-01-01"
+    "fechaInicioObra": "2024-05-14",
+    "fechaFinObra": "2027-06-21"
   },
   "maquinas": [
     {

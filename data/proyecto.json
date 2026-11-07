@@ -5,7 +5,7 @@
     "ING. JOSÉ EDGAR CAMPOS CESPEDES - RNI: 30-222 - TEL: +591 73433166",
     "ING. HECTOR ERNESTO GALVEZ RIBERIN - RNI: 17-819 - TEL: +591 76925947"
   ],
-  "fechaGuardado": "2026-11-07T00:22:27.240Z",
+  "fechaGuardado": "2026-11-07T00:27:23.751Z",
   "obra": {
     "nombre": "Oruro-Challapata",
     "progIniGlobal": "235+266",
@@ -203,7 +203,7 @@
       "maquina": "SP-1600",
       "ancho": 8.2,
       "via": "IZQUIERDA",
-      "obs": "N/A",
+      "obs": "PC",
       "fecha": "2025-10-01",
       "vol": 59.03999999999999,
       "monto": 73077.94079999998
@@ -229,7 +229,7 @@
       "maquina": "SP-1600",
       "ancho": 8.2,
       "via": "IZQUIERDA",
-      "obs": "N/A",
+      "obs": "PC",
       "fecha": "2025-10-02",
       "vol": 59.03999999999999,
       "monto": 73077.94079999998
@@ -320,7 +320,7 @@
       "maquina": "SP-1600",
       "ancho": 8.2,
       "via": "IZQUIERDA",
-      "obs": "N/A",
+      "obs": "PC",
       "fecha": "2025-10-08",
       "vol": 59.03999999999999,
       "monto": 73077.94079999998
@@ -346,7 +346,7 @@
       "maquina": "SP-1600",
       "ancho": 8.2,
       "via": "IZQUIERDA",
-      "obs": "N/A",
+      "obs": "PC",
       "fecha": "2025-10-10",
       "vol": 206.64,
       "monto": 255772.79279999997

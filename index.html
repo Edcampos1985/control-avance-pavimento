@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Control de Avance de Obra — Pavimento Rígido v1.4</title>
+<title>Control de Avance de Obra — Pavimento Rígido v2.8</title>
 <style>
 :root{
   --azul:#004B87;--azul2:#0068c9;--verde:#087f5b;--verde2:#0ca678;
@@ -125,7 +125,7 @@ body{font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:linear-gradien
 
 /* PAPIRO SVG */
 .papiro-container{background:#fff;border-radius:12px;padding:16px;border:1px solid var(--borde);margin-bottom:16px;overflow-x:auto}
-.papiro-svg{display:block;min-height:300px}
+.papiro-svg{display:block;min-height:320px}
 .papiro-leyenda{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;margin-top:14px;font-size:11.5px}
 .papiro-leyenda .item{display:flex;align-items:center;gap:6px}
 .papiro-leyenda .swatch{width:22px;height:12px;border-radius:2px;border:1px solid rgba(0,0,0,.15)}
@@ -202,12 +202,11 @@ body{font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:linear-gradien
 
   <!-- CABECERA -->
   <div class="cabecera">
-    <h1>🏗️ Control de Avance de Obra — Pavimento Rígido v1.4</h1>
+    <h1>🏗️ Control de Avance de Obra — Pavimento Rígido v2.8</h1>
     <p>Registro de tramos · Papiro de obra · Avance físico y financiero en tiempo real</p>
     <div class="autor">
       <span>ING. JOSÉ EDGAR CAMPOS CESPEDES · RNI: 30-222 · TEL: +591 73433166</span>
-      <span>ING. HECTOR ERNESTO GALVEZ RIBERIN · RNI: 17-819 · TEL: +591 76925947</span>
-      <span>Versión 1.4 - 2026</span>
+      <span>Versión 2.8 - 2026</span>
     </div>
   </div>
 
@@ -243,6 +242,11 @@ body{font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:linear-gradien
         <label>Volumen total del ítem (m³)</label>
         <input id="volTotalItem" type="number" step="0.01" placeholder="Del contrato. Si se deja vacío, se calcula del rango global" oninput="sincronizarYRenderizar()">
         <div class="ayuda" id="ayudaVolTotal"></div>
+      </div>
+      <div class="campo">
+        <label style="color:var(--azul)">Ancho máx. de losa (m)</label>
+        <input id="anchoMaxEscala" type="number" step="0.1" value="10" oninput="sincronizarYRenderizar()" title="Define la escala vertical del papiro">
+        <div class="ayuda">Escala visual del papiro</div>
       </div>
       <div class="campo">
         <label>Fecha de inicio de obra</label>
@@ -364,10 +368,10 @@ body{font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:linear-gradien
   <div class="seccion">
     <h2>🗺️ 5. Papiro de obra <span class="badge">Pavimento rígido</span></h2>
     <div class="aviso info no-print">
-      <b>ℹ️ Cómo leerlo:</b> Eje horizontal = progresiva. Eje vertical = vía. Las barras se pegan al eje si son <b>internas</b> o al borde si son <b>externas</b>. El grosor refleja el ancho real y los colores son los de cada máquina.
+      <b>ℹ️ Cómo leerlo:</b> Eje horizontal = progresiva. Eje vertical = vía. Las barras se pegan al eje si son <b>internas</b> o al borde si son <b>externas</b>. El grosor refleja el ancho real (escala dinámica) y los colores son los de cada máquina.
     </div>
     <div class="papiro-container">
-      <svg id="papiroSvg" class="papiro-svg" viewBox="0 0 1200 300" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Papiro de obra pavimento rígido"></svg>
+      <svg id="papiroSvg" class="papiro-svg" viewBox="0 0 1200 320" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Papiro de obra pavimento rígido"></svg>
     </div>
     <div class="papiro-leyenda" id="papiroLeyenda"></div>
     <div class="botones-inferiores no-print" style="margin-top:14px">
@@ -428,7 +432,6 @@ body{font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:linear-gradien
 
 /* =========================================================
    CONFIGURACIÓN DE GITHUB
-   Ruta donde estará tu archivo JSON en el repositorio.
    ========================================================= */
 const URL_DATOS_GITHUB = 'data/proyecto.json';
 
@@ -489,7 +492,6 @@ async function actualizarDesdeServidor(silencioso){
       btn.disabled = true;
     }
     
-    // Agregamos un timestamp para evitar el caché del navegador
     var response = await fetch(URL_DATOS_GITHUB + '?t=' + new Date().getTime());
     
     if (!response.ok) {
@@ -497,7 +499,7 @@ async function actualizarDesdeServidor(silencioso){
     }
     
     var data = await response.json();
-    cargarEstado(data, true); // true = silencioso (sin alertas)
+    cargarEstado(data, true); 
     
     if(!silencioso) {
       var ind=$("indicadorGuardado");
@@ -526,7 +528,7 @@ async function actualizarDesdeServidor(silencioso){
    ========================================================= */
 var tramos = [];
 var maquinas = [];
-var geometria = { progIni:0, progFin:0, espesor:0.24, precio:1237.77, volTotal:0 };
+var geometria = { progIni:0, progFin:0, espesor:0.24, precio:1237.77, volTotal:0, anchoMax:10 };
 var ordenActual = { campo:"num", asc:true };
 var zoomPapiro = 1;
 
@@ -548,6 +550,9 @@ function leerEstado(){
   geometria.espesor = Number.isFinite(num("espesor"))?num("espesor"):0.24;
   geometria.precio = Number.isFinite(num("precioUnit"))?num("precioUnit"):1237.77;
   geometria.volTotal = Number.isFinite(num("volTotalItem"))?num("volTotalItem"):0;
+  
+  var am = num("anchoMaxEscala");
+  geometria.anchoMax = (Number.isFinite(am) && am > 0) ? am : 10;
 
   var ayuda=$("ayudaVolTotal");
   if(geometria.volTotal>0){
@@ -684,7 +689,7 @@ function duplicarUltimo(){
 }
 
 /* =========================================================
-   EDITAR TRAMO (TOTALMENTE EDITABLE)
+   EDITAR TRAMO
    ========================================================= */
 function editarCampo(idx, campo, valor, input){
   var t=tramos[idx];
@@ -771,7 +776,7 @@ function ordenarPor(campo){
 }
 
 /* =========================================================
-   RENDER TABLA CON FILTROS AVANZADOS
+   RENDER TABLA CON FILTROS
    ========================================================= */
 function renderTabla(){
   var filtroMaq=txt("filtroMaquina")||"todas";
@@ -947,18 +952,20 @@ function renderResumen(){
 }
 
 /* =========================================================
-   PAPIRO SVG (ESCALAS DINÁMICAS Y ANCHOS REALES)
+   PAPIRO SVG (VERSIÓN 2.8 - FALLBACK DE EXTERNA SIN INTERNA)
    ========================================================= */
 function renderPapiro(){
   var svg=$("papiroSvg");
   if(!svg)return;
 
   var W=1200*zoomPapiro;
-  var H=300;
-  var margen={top:30, right:20, bottom:50, left:110};
+  var H=320; 
+  // MÁRGENES SIMÉTRICOS
+  var margen={top:50, right:110, bottom:50, left:110};
   var pW=W-margen.left-margen.right;
   var pH=H-margen.top-margen.bottom;
-  var alturaVia = pH/2;
+  
+  var yEje = margen.top + pH/2;
 
   var pMin=geometria.progIni;
   var pMax=geometria.progFin;
@@ -974,17 +981,41 @@ function renderPapiro(){
     return margen.left + ((prog-pMin)/(pMax-pMin))*pW;
   }
 
+  var maxAnchoEscala = geometria.anchoMax * 1.10; 
+  var alturaMaxVia = pH/2; 
+
+  var offsetEjeMetros = 0.5; 
+  var offsetEjePx = (offsetEjeMetros / maxAnchoEscala) * alturaMaxVia;
+
   var html="";
   html+='<title>Papiro de obra - Pavimento rígido</title>';
   
+  // Fondos
   html+='<rect x="'+margen.left+'" y="'+margen.top+'" width="'+pW+'" height="'+pH+'" fill="#fafcfd" stroke="#e0e8f0"/>';
-  html+='<rect x="'+margen.left+'" y="'+margen.top+'" width="'+pW+'" height="'+alturaVia+'" fill="#f0f7f2" opacity="0.5"/>';
-  html+='<rect x="'+margen.left+'" y="'+(margen.top+alturaVia)+'" width="'+pW+'" height="'+alturaVia+'" fill="#fffbf0" opacity="0.5"/>';
+  html+='<rect x="'+margen.left+'" y="'+margen.top+'" width="'+pW+'" height="'+alturaMaxVia+'" fill="#f0f7f2" opacity="0.5"/>';
+  html+='<rect x="'+margen.left+'" y="'+yEje+'" width="'+pW+'" height="'+alturaMaxVia+'" fill="#fffbf0" opacity="0.5"/>';
 
   // Etiquetas de vía
-  html+='<text x="'+(margen.left-8)+'" y="'+(margen.top+alturaVia/2)+'" text-anchor="end" font-size="11" font-weight="bold" fill="#1e7a4a">VÍA IZQUIERDA</text>';
-  html+='<text x="'+(margen.left-8)+'" y="'+(margen.top+alturaVia+alturaVia/2)+'" text-anchor="end" font-size="11" font-weight="bold" fill="#c05621">VÍA DERECHA</text>';
-  html+='<line x1="'+margen.left+'" y1="'+(margen.top+alturaVia)+'" x2="'+(margen.left+pW)+'" y2="'+(margen.top+alturaVia)+'" stroke="#78909c" stroke-width="1.5" stroke-dasharray="4 3"/>';
+  html+='<text x="'+(margen.left-8)+'" y="'+(margen.top+alturaMaxVia/2)+'" text-anchor="end" font-size="11" font-weight="bold" fill="#1e7a4a">VÍA IZQUIERDA</text>';
+  html+='<text x="'+(margen.left-8)+'" y="'+(yEje+alturaMaxVia/2)+'" text-anchor="end" font-size="11" font-weight="bold" fill="#c05621">VÍA DERECHA</text>';
+  
+  // Línea del Eje central
+  html+='<line x1="'+margen.left+'" y1="'+yEje+'" x2="'+(margen.left+pW)+'" y2="'+yEje+'" stroke="#78909c" stroke-width="2" stroke-dasharray="4 3"/>';
+
+  // Indicador de escala
+  html+='<text x="'+(margen.left-80)+'" y="'+(margen.top)+'" text-anchor="start" font-size="9" fill="#90a4ae">Max: '+fmt(geometria.anchoMax,1)+'m</text>';
+  html+='<text x="'+(margen.left-80)+'" y="'+(yEje+alturaMaxVia)+'" text-anchor="start" font-size="9" fill="#90a4ae">Max: '+fmt(geometria.anchoMax,1)+'m</text>';
+
+  /* ETIQUETAS DE INICIO Y FIN */
+  // INICIO
+  html+='<rect x="'+(margen.left-30)+'" y="10" width="60" height="26" fill="#fff9c4" stroke="#90a4ae" stroke-width="1" rx="3"/>';
+  html+='<text x="'+margen.left+'" y="21" text-anchor="middle" font-size="8" font-weight="bold" fill="#546e7a">INICIO</text>';
+  html+='<text x="'+margen.left+'" y="32" text-anchor="middle" font-size="10" font-weight="bold" fill="#004B87">'+fmtProg(pMin)+'</text>';
+  
+  // FIN
+  html+='<rect x="'+(margen.left+pW-30)+'" y="10" width="60" height="26" fill="#fff9c4" stroke="#90a4ae" stroke-width="1" rx="3"/>';
+  html+='<text x="'+(margen.left+pW)+'" y="21" text-anchor="middle" font-size="8" font-weight="bold" fill="#546e7a">FIN</text>';
+  html+='<text x="'+(margen.left+pW)+'" y="32" text-anchor="middle" font-size="10" font-weight="bold" fill="#004B87">'+fmtProg(pMax)+'</text>';
 
   /* ESCALA DINÁMICA DE PROGRESIVAS */
   var pxPorMetro = pW / (pMax - pMin);
@@ -1010,41 +1041,60 @@ function renderPapiro(){
   html+='<text x="'+(margen.left+pW/2)+'" y="'+(H-6)+'" text-anchor="middle" font-size="11" font-weight="bold" fill="#263238">Progresiva (m)</text>';
   html+='<text x="15" y="'+(margen.top+pH/2)+'" text-anchor="middle" font-size="11" font-weight="bold" fill="#263238" transform="rotate(-90 15 '+(margen.top+pH/2)+')">Vía</text>';
 
-  // DIBUJAR TRAMOS
-  tramos.forEach(function(t){
+  // --- LÓGICA DE DIBUJO ---
+  
+  var tramosOrdenados = [...tramos].sort(function(a,b){
+    if(a.fecha < b.fecha) return -1;
+    if(a.fecha > b.fecha) return 1;
+    var obsOrder = { "INTERNA": 1, "PC": 2, "EXTERNA": 3 };
+    var oA = obsOrder[a.obs] || 4;
+    var oB = obsOrder[b.obs] || 4;
+    if (oA !== oB) return oA - oB;
+    return a.progIni - b.progIni;
+  });
+
+  tramosOrdenados.forEach(function(t){
     var x1=xEsc(t.progIni);
     var x2=xEsc(t.progFin);
     var w=Math.max(1,x2-x1);
     
-    // Color según máquina
     var maq = maquinas.find(function(m){return m.codigo === t.maquina;});
     var colorFill = maq ? maq.color : "#1e7a4a";
+    var altoBarra = (t.ancho / maxAnchoEscala) * alturaMaxVia;
+    var obs = t.obs === "N/A" ? "PC" : t.obs; 
 
-    // Altura proporcional al ancho real (hasta 10m escalan a toda la altura de la vía)
-    var maxAncho = 10;
-    var altoBarra = (t.ancho/maxAncho) * alturaVia;
-    if(altoBarra < 5) altoBarra = 5;
+    var esIzq = (t.via === "IZQUIERDA" || t.via === "COMPLETA");
+    var offsetAnchoMetros = 0;
 
-    var esIzq = t.via==="IZQUIERDA" || t.via==="COMPLETA";
-    var esDer = t.via==="DERECHA" || t.via==="COMPLETA";
-
-    // Lógica para pegar al eje según INTERNA/EXTERNA/PC
-    if(esIzq){
-      var yIzq;
-      if(t.obs === "INTERNA") yIzq = margen.top + alturaVia/2; // Pegado al eje (hacia arriba)
-      else if(t.obs === "EXTERNA") yIzq = margen.top + alturaVia/2 - altoBarra; // Pegado al borde superior
-      else yIzq = margen.top + alturaVia/2 - altoBarra/2; // PC (Centrado)
+    // NUEVA LÓGICA: Si es externa, busca la interna. Si no la encuentra, usa su propio ancho
+    if (obs === "EXTERNA") {
+      var internas = tramos.filter(function(o) {
+        return o.via === t.via && o.obs === "INTERNA";
+      });
+      var solapadas = internas.filter(function(o) {
+        return Math.max(0, Math.min(o.progFin, t.progFin) - Math.max(o.progIni, t.progIni)) > 0;
+      });
       
-      html+='<rect x="'+x1+'" y="'+yIzq+'" width="'+w+'" height="'+altoBarra+'" fill="'+colorFill+'" fill-opacity="0.85" stroke="#263238" stroke-width="0.8"><title>'+fmtProg(t.progIni)+' → '+fmtProg(t.progFin)+'\n'+t.maquina+' ('+t.obs+') | '+fmt(t.ancho,2)+' m | '+fmt(t.vol,2)+' m³</title></rect>';
+      if (solapadas.length > 0) {
+        // Si encuentra interna, se desplaza el ancho de esa interna
+        var maxW = Math.max.apply(null, solapadas.map(function(o){ return o.ancho; }));
+        offsetAnchoMetros = maxW;
+      } else {
+        // SI NO ENCUENTRA INTERNA, se desplaza su propio ancho
+        offsetAnchoMetros = t.ancho;
+      }
     }
-    if(esDer){
-      var yDer;
-      if(t.obs === "INTERNA") yDer = margen.top + alturaVia + alturaVia/2 - altoBarra; // Pegado al eje (hacia abajo)
-      else if(t.obs === "EXTERNA") yDer = margen.top + alturaVia + alturaVia/2; // Pegado al borde inferior
-      else yDer = margen.top + alturaVia + alturaVia/2 - altoBarra/2; // PC (Centrado)
-      
-      html+='<rect x="'+x1+'" y="'+yDer+'" width="'+w+'" height="'+altoBarra+'" fill="'+colorFill+'" fill-opacity="0.85" stroke="#263238" stroke-width="0.8"><title>'+fmtProg(t.progIni)+' → '+fmtProg(t.progFin)+'\n'+t.maquina+' ('+t.obs+') | '+fmt(t.ancho,2)+' m | '+fmt(t.vol,2)+' m³</title></rect>';
+
+    var offsetPx = (offsetAnchoMetros / maxAnchoEscala) * alturaMaxVia;
+    var yPos;
+
+    if (esIzq) {
+      yPos = yEje - offsetEjePx - offsetPx - altoBarra;
+    } else {
+      yPos = yEje + offsetEjePx + offsetPx;
     }
+
+    html+='<rect x="'+x1+'" y="'+yPos+'" width="'+w+'" height="'+altoBarra+'" fill="'+colorFill+'" fill-opacity="0.85" stroke="#263238" stroke-width="0.5"><title>'+fmtProg(t.progIni)+' → '+fmtProg(t.progFin)+'\n'+t.maquina+' ('+t.obs+') | '+fmt(t.ancho,2)+' m</title></rect>';
   });
 
   // Frente de avance
@@ -1060,7 +1110,7 @@ function renderPapiro(){
 
   html+='<rect x="'+margen.left+'" y="'+margen.top+'" width="'+pW+'" height="'+pH+'" fill="none" stroke="#263238" stroke-width="1.5"/>';
 
-  svg.setAttribute("viewBox", "0 0 "+W+" 300");
+  svg.setAttribute("viewBox", "0 0 "+W+" "+H);
   svg.innerHTML=html;
 
   // Leyenda dinámica
@@ -1239,11 +1289,10 @@ function dibujarBarras(svgId, datos, unidad){
    ========================================================= */
 function recolectarEstado(){
   return {
-    version:"1.4",
+    version:"2.8",
     aplicacion:"Control de Avance de Obra - Pavimento Rígido",
     autores:[
-      "ING. JOSÉ EDGAR CAMPOS CESPEDES - RNI: 30-222 - TEL: +591 73433166",
-      "ING. HECTOR ERNESTO GALVEZ RIBERIN - RNI: 17-819 - TEL: +591 76925947"
+      "ING. JOSÉ EDGAR CAMPOS CESPEDES - RNI: 30-222 - TEL: +591 73433166"
     ],
     fechaGuardado:new Date().toISOString(),
     obra:{
@@ -1253,6 +1302,7 @@ function recolectarEstado(){
       espesor:txt("espesor"),
       precioUnit:txt("precioUnit"),
       volTotalItem:txt("volTotalItem"),
+      anchoMaxEscala:txt("anchoMaxEscala"),
       fechaInicioObra:txt("fechaInicioObra"),
       fechaFinObra:txt("fechaFinObra")
     },
@@ -1274,8 +1324,7 @@ function guardarProyecto(){
   }
   var estado=recolectarEstado();
   var json=JSON.stringify(estado,null,2);
-  var fecha=txt("fechaInicioObra")||hoyISO();
-  var nombre="proyecto.json"; // Nombre estandarizado
+  var nombre="proyecto.json"; 
   var blob=new Blob([json],{type:"application/json;charset=utf-8"});
   var url=URL.createObjectURL(blob);
   var a=document.createElement("a");
@@ -1306,6 +1355,7 @@ function cargarEstado(data, silencioso){
     $("espesor").value=data.obra.espesor||"0.24";
     $("precioUnit").value=data.obra.precioUnit||"1237.77";
     $("volTotalItem").value=data.obra.volTotalItem||"";
+    $("anchoMaxEscala").value=data.obra.anchoMaxEscala||"10";
     $("fechaInicioObra").value=data.obra.fechaInicioObra||"";
     $("fechaFinObra").value=data.obra.fechaFinObra||"";
   }
@@ -1342,7 +1392,6 @@ function exportarCSV(){
   var lineas=[];
   lineas.push(["CONTROL DE AVANCE DE OBRA - PAVIMENTO RÍGIDO"]);
   lineas.push(["ING. JOSÉ EDGAR CAMPOS CESPEDES - RNI: 30-222 - TEL: +591 73433166"]);
-  lineas.push(["ING. HECTOR ERNESTO GALVEZ RIBERIN - RNI: 17-819 - TEL: +591 76925947"]);
   lineas.push([]);
   lineas.push(["Obra",txt("nombreObra")]);
   lineas.push(["Prog. inicial global",txt("progIniGlobal")]);
@@ -1350,6 +1399,7 @@ function exportarCSV(){
   lineas.push(["Espesor (m)",txt("espesor")]);
   lineas.push(["Precio unitario (Bs/m³)",txt("precioUnit")]);
   lineas.push(["Volumen total ítem (m³)",fmt(c.volTotal,2)]);
+  lineas.push(["Ancho máx. losa (m)",txt("anchoMaxEscala")]);
   lineas.push([]);
   lineas.push(["RESUMEN"]);
   lineas.push(["Tramos registrados",c.totalTramos]);
@@ -1385,6 +1435,7 @@ function limpiarTodo(){
   ["nombreObra","progIniGlobal","progFinGlobal","volTotalItem","fechaInicioObra","fechaFinObra","fIni","fFin","fAncho","fFecha","mCodigo","mAncho"].forEach(function(id){if($(id))$(id).value="";});
   $("espesor").value="0.24";
   $("precioUnit").value="1237.77";
+  $("anchoMaxEscala").value="10";
   tramos=[];maquinas=[];
   renderMaquinas();
   renderFormSelectMaquinas();
@@ -1411,7 +1462,7 @@ function imprimirResumen(){
     }
   });
   window.print();
-  setTimeout(function(){estadoPrev.forEach(function(o){o.el.style.display=o.style.display||"";});},500);
+  setTimeout(function(){estadoPrev.forEach(function(o){o.el.style.display=o.el.style.display||"";});},500);
 }
 
 /* =========================================================
@@ -1485,10 +1536,6 @@ window.addEventListener("load",function(){
     });
   }
 
-  // ==========================================
-  // CARGA AUTOMÁTICA AL INICIAR
-  // Intenta traer el JSON de GitHub (data/proyecto.json)
-  // ==========================================
   actualizarDesdeServidor(true);
 });
 </script>
